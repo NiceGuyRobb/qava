@@ -1,7 +1,7 @@
 # Qava — Topic-Driven Adaptive Interview Engine
 
 > A definition-driven consultation engine that combines a deterministic interview path with bounded AI clarification and evidence-backed analysis.
-
+<!-- 81 65 86 65 58 32 81 117 101 115 116 105 111 110 32 65 110 115 119 101 114 32 86 105 101 119 32 65 73 -->
 ## The idea
 
 Most forms force people through a fixed sequence of fields. Most AI interviews do the opposite: they are flexible, but unpredictable and difficult to validate.
