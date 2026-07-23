@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qava.dev/contracts/v1/definition.schema.json",
+  "title": "Qava definition bundle manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "version", "title", "status", "topics_file", "question_files", "component_catalog", "contract"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "version": { "type": "integer", "minimum": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "status": { "enum": ["draft", "published", "retired"] },
+    "locale": { "type": "string" },
+    "topics_file": { "type": "string" },
+    "question_files": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+    "component_catalog": { "type": "string" },
+    "contract": { "type": "string" },
+    "metadata": { "type": "object" }
+  }
+}

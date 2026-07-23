@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "topic_id": "structure",
+  "questions": [
+    {
+      "id": "home-structure",
+      "type": "defined",
+      "topic_id": "structure",
+      "path": "structure",
+      "prompt": "Describe the basic structure of the home.",
+      "component": "structured_form",
+      "required": true,
+      "props": {
+        "fields": [
+          {
+            "key": "home_type",
+            "label": "Preferred home type",
+            "component": "single_select",
+            "options": [
+              "Bungalow",
+              "Two storey",
+              "One-and-a-half storey",
+              "Bi-level or split level",
+              "Skinny or infill",
+              "Three storey",
+              "Not decided"
+            ]
+          },
+          {
+            "key": "target_area",
+            "label": "Approximate finished living area",
+            "component": "measurement",
+            "unit_options": [
+              "sq_ft",
+              "sq_m"
+            ]
+          },
+          {
+            "key": "basement",
+            "label": "Basement requirement",
+            "component": "single_select",
+            "options": [
+              "No basement",
+              "Undeveloped basement",
+              "Developed basement",
+              "Walkout basement",
+              "Not decided"
+            ]
+          },
+          {
+            "key": "ceiling_preferences",
+            "label": "Ceiling preferences",
+            "component": "multi_select",
+            "options": [
+              "Standard throughout",
+              "Raised main-floor ceilings",
+              "Vaulted living area",
+              "Double-height space",
+              "Raised basement ceilings"
+            ]
+          },
+          {
+            "key": "stair_location",
+            "label": "Preferred staircase location",
+            "component": "single_select",
+            "options": [
+              "Front",
+              "Back",
+              "Side",
+              "Central",
+              "No preference"
+            ]
+          },
+          {
+            "key": "primary_bedroom_location",
+            "label": "Preferred primary bedroom location",
+            "component": "single_select",
+            "options": [
+              "Main floor",
+              "Upper floor",
+              "Lower floor",
+              "No preference"
+            ]
+          },
+          {
+            "key": "elevator",
+            "label": "Should an elevator or future elevator shaft be considered?",
+            "component": "single_select",
+            "options": [
+              "Yes, install now",
+              "Allow for future installation",
+              "No",
+              "Not sure"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "basement-use",
+      "type": "conditional",
+      "topic_id": "structure",
+      "path": "structure.basement_uses",
+      "prompt": "What should the basement support?",
+      "component": "multi_select",
+      "required": true,
+      "when": {
+        "path": "structure.basement",
+        "operator": "in",
+        "value": [
+          "Developed basement",
+          "Walkout basement"
+        ]
+      },
+      "props": {
+        "options": [
+          "Family recreation",
+          "Guest bedrooms",
+          "Rental or secondary suite",
+          "Home theatre",
+          "Bar or entertainment",
+          "Gym or wellness",
+          "Storage",
+          "Mechanical and utilities"
+        ]
+      }
+    }
+  ]
+}

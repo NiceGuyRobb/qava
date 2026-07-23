@@ -1,0 +1,14 @@
+{
+  "id": "insight-301",
+  "type": "cross_topic",
+  "title": "Budget and scope may be misaligned",
+  "summary": "The proposed area and finish expectations may exceed the stated budget.",
+  "evidence": [
+    { "path": "budget.range", "value": "600000_900000" },
+    { "path": "structure.target_area", "value": { "value": 3200, "unit": "sq_ft" } },
+    { "path": "rooms.priorities", "value": ["Kitchen", "Primary suite", "Main living area"] }
+  ],
+  "confidence": 0.81,
+  "generated_at_revision": 18,
+  "generated_at": "2026-07-22T20:17:00Z"
+}

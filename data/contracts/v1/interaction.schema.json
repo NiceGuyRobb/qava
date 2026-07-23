@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qava.dev/contracts/v1/interaction.schema.json",
+  "title": "Question and answer interaction",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "session_id", "session_revision", "topic_id", "question", "status", "created_at"],
+  "properties": {
+    "id": { "type": "string" }, "session_id": { "type": "string" }, "session_revision": { "type": "integer" },
+    "topic_id": { "type": "string" }, "question": { "$ref": "question.schema.json" }, "answer": {},
+    "status": { "enum": ["pending", "answered", "skipped", "inactive"] },
+    "created_at": { "type": "string", "format": "date-time" }, "answered_at": { "type": ["string", "null"], "format": "date-time" }
+  }
+}

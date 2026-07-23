@@ -1,0 +1,17 @@
+{
+  "contract_version": 1,
+  "topic": { "id": "budget", "title": "Budget & Delivery" },
+  "question": {
+    "id": "space-priorities",
+    "prompt": "Rank the spaces that should receive the most attention.",
+    "answer_path": "rooms.priorities",
+    "clarification_goals": ["Understand why the first-ranked space matters"]
+  },
+  "answer": ["Kitchen", "Primary suite", "Main living area"],
+  "relevant_session_data": {
+    "budget": { "range": "600000_900000" },
+    "structure": { "target_area": { "value": 3200, "unit": "sq_ft" } }
+  },
+  "allowed_components": ["single_select", "multi_select", "short_text", "long_text"],
+  "constraints": { "remaining_followups": 1, "maximum_options": 6 }
+}

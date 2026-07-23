@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "topic_id": "budget",
+  "questions": [
+    {
+      "id": "budget-range",
+      "type": "defined",
+      "topic_id": "budget",
+      "path": "budget.range",
+      "prompt": "What total project budget are you currently considering?",
+      "component": "budget_tiers",
+      "required": true,
+      "props": {
+        "currency": "CAD",
+        "options": [
+          {
+            "value": "under_600000",
+            "label": "Under $600,000"
+          },
+          {
+            "value": "600000_900000",
+            "label": "$600,000–$900,000"
+          },
+          {
+            "value": "900000_1300000",
+            "label": "$900,000–$1.3 million"
+          },
+          {
+            "value": "1300000_2000000",
+            "label": "$1.3–$2 million"
+          },
+          {
+            "value": "over_2000000",
+            "label": "$2 million or more"
+          },
+          {
+            "value": "unknown",
+            "label": "Not sure yet"
+          }
+        ]
+      }
+    },
+    {
+      "id": "budget-scope",
+      "type": "defined",
+      "topic_id": "budget",
+      "path": "budget.includes",
+      "prompt": "What should that budget include?",
+      "component": "multi_select",
+      "required": true,
+      "props": {
+        "options": [
+          "Land",
+          "Design and consultant fees",
+          "Construction",
+          "Interior furnishings",
+          "Landscaping",
+          "Taxes and permits",
+          "Contingency"
+        ]
+      }
+    },
+    {
+      "id": "funding",
+      "type": "defined",
+      "topic_id": "budget",
+      "path": "budget.funding",
+      "prompt": "How do you expect to fund the project?",
+      "component": "single_select",
+      "required": true,
+      "props": {
+        "options": [
+          "Owner-funded",
+          "Construction loan",
+          "Owner-builder loan",
+          "Mixed funding",
+          "Not decided"
+        ]
+      }
+    },
+    {
+      "id": "contingency",
+      "type": "defined",
+      "topic_id": "budget",
+      "path": "budget.contingency",
+      "prompt": "What contingency allowance should be planned?",
+      "component": "single_select",
+      "required": true,
+      "props": {
+        "options": [
+          "15–20%",
+          "5–10%",
+          "No contingency currently planned",
+          "Explain the options first"
+        ]
+      }
+    },
+    {
+      "id": "timeline",
+      "type": "defined",
+      "topic_id": "budget",
+      "path": "delivery.timeline",
+      "prompt": "What timeline are you hoping for?",
+      "component": "single_select",
+      "required": true,
+      "props": {
+        "options": [
+          "Under 12 months",
+          "12–18 months",
+          "More than 18 months",
+          "Flexible"
+        ]
+      }
+    },
+    {
+      "id": "deferrable-scope",
+      "type": "defined",
+      "topic_id": "budget",
+      "path": "budget.deferrable_scope",
+      "prompt": "Which items could be deferred to a later phase?",
+      "component": "multi_select",
+      "required": false,
+      "props": {
+        "options": [
+          "Landscaping",
+          "Basement development",
+          "Custom built-ins",
+          "Outdoor kitchen",
+          "Pool or spa",
+          "None"
+        ]
+      }
+    }
+  ]
+}

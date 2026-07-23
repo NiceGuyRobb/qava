@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "topics": [
+    {
+      "id": "project",
+      "title": "Project",
+      "description": "Project type, current stage, intended use, and delivery approach",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "site",
+      "title": "Land & Site",
+      "description": "Land status, site characteristics, and known constraints",
+      "order": 20,
+      "required": true
+    },
+    {
+      "id": "household",
+      "title": "Household & Lifestyle",
+      "description": "Who will use the home and how they live, work, and entertain",
+      "order": 30,
+      "required": true
+    },
+    {
+      "id": "structure",
+      "title": "Home Structure",
+      "description": "Home type, size, storeys, basement, stairs, and major structural requirements",
+      "order": 40,
+      "required": true
+    },
+    {
+      "id": "rooms",
+      "title": "Rooms & Spaces",
+      "description": "Required rooms, room priorities, sizes, locations, and special features",
+      "order": 50,
+      "required": true
+    },
+    {
+      "id": "style",
+      "title": "Style & Character",
+      "description": "Architectural direction, materials, atmosphere, and aesthetic preferences",
+      "order": 60,
+      "required": true
+    },
+    {
+      "id": "outdoors",
+      "title": "Exterior & Outdoor Living",
+      "description": "Exterior, garage, landscaping, outdoor entertaining, and recreational features",
+      "order": 70,
+      "required": true
+    },
+    {
+      "id": "budget",
+      "title": "Budget & Delivery",
+      "description": "Budget, funding, contingency, schedule, priorities, and trade-offs",
+      "order": 80,
+      "required": true
+    }
+  ]
+}

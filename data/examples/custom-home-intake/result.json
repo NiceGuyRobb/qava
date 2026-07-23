@@ -1,0 +1,12 @@
+{
+  "session_id": "session-123",
+  "definition": { "id": "custom-home-intake", "version": 1 },
+  "revision": 42,
+  "status": "complete",
+  "completed_at": "2026-07-23T12:00:00Z",
+  "data": { "project": {}, "site": {}, "household": {}, "structure": {}, "rooms": {}, "style": {}, "outdoors": {}, "budget": {}, "delivery": {}, "decisions": {} },
+  "topics": {},
+  "health": { "completeness": 100, "clarity": 84, "consistency": 90, "confidence": 82, "specificity": 78, "overall": 87, "calculation_version": 1 },
+  "insights": ["insight-301"],
+  "interaction_summary": { "defined_answers": 27, "clarifications": 6 }
+}

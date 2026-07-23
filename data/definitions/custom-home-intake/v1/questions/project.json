@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "topic_id": "project",
+  "questions": [
+    {
+      "id": "project-basics",
+      "type": "defined",
+      "topic_id": "project",
+      "path": "project",
+      "prompt": "Tell us where your project currently stands.",
+      "component": "structured_form",
+      "required": true,
+      "props": {
+        "fields": [
+          {
+            "key": "build_type",
+            "label": "What kind of project is this?",
+            "component": "single_select",
+            "options": [
+              "New build",
+              "Renovation",
+              "Extension",
+              "Knock-down rebuild"
+            ]
+          },
+          {
+            "key": "current_stage",
+            "label": "Where are you in the process?",
+            "component": "single_select",
+            "options": [
+              "Still searching for land",
+              "Land owned or under contract",
+              "Design already started",
+              "Builder already engaged"
+            ]
+          },
+          {
+            "key": "intended_use",
+            "label": "How will the completed home be used?",
+            "component": "single_select",
+            "options": [
+              "Primary residence",
+              "Investment property",
+              "Holiday home",
+              "Other"
+            ]
+          },
+          {
+            "key": "delivery_approach",
+            "label": "How do you expect the project to be delivered?",
+            "component": "single_select",
+            "options": [
+              "Design and build under one contract",
+              "Separate architect and builder",
+              "Owner-builder",
+              "Not decided"
+            ]
+          },
+          {
+            "key": "experience_level",
+            "label": "How much building experience do you have?",
+            "component": "single_select",
+            "options": [
+              "First project",
+              "One or two previous projects",
+              "Experienced developer or builder"
+            ]
+          }
+        ]
+      },
+      "answer_schema": {
+        "type": "object",
+        "required": [
+          "build_type",
+          "current_stage",
+          "intended_use",
+          "delivery_approach",
+          "experience_level"
+        ]
+      }
+    },
+    {
+      "id": "guidance-level",
+      "type": "defined",
+      "topic_id": "project",
+      "path": "project.guidance_level",
+      "prompt": "How much guidance would you like during the process?",
+      "component": "single_select",
+      "required": true,
+      "props": {
+        "options": [
+          {
+            "value": "high",
+            "label": "High",
+            "description": "Explain decisions and implications"
+          },
+          {
+            "value": "medium",
+            "label": "Medium",
+            "description": "Guide me at important decision points"
+          },
+          {
+            "value": "low",
+            "label": "Self-directed",
+            "description": "I mostly know what I want"
+          }
+        ]
+      }
+    }
+  ]
+}
