@@ -1,0 +1,19 @@
+{
+  "id": "generated-tradeoff-001",
+  "type": "generated",
+  "topic_id": "budget",
+  "parent_question_id": "budget-range",
+  "path": "decisions.tradeoffs.primary",
+  "prompt": "If the current budget cannot support both, which direction should the design protect?",
+  "component": "tradeoff",
+  "required": true,
+  "generated_from": {
+    "evidence_paths": ["budget.range", "structure.target_area", "rooms.priorities", "rooms.programme", "style.overall"]
+  },
+  "props": {
+    "option_a": { "label": "Protect the size and room programme", "consequence": "Use simpler finishes and defer some upgrades" },
+    "option_b": { "label": "Protect the material and finish quality", "consequence": "Reduce overall area or remove lower-priority rooms" },
+    "allow_balanced_response": true,
+    "require_explanation": true
+  }
+}

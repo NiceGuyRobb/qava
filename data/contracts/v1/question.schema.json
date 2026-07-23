@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qava.dev/contracts/v1/question.schema.json",
+  "title": "Qava question",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "type", "topic_id", "path", "prompt", "component", "required"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "type": { "enum": ["defined", "conditional", "clarification", "confirmation", "generated"] },
+    "topic_id": { "type": "string" },
+    "parent_question_id": { "type": "string" },
+    "path": { "type": "string", "pattern": "^[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)*$" },
+    "prompt": { "type": "string", "minLength": 1 },
+    "help_text": { "type": "string" },
+    "component": { "type": "string" },
+    "required": { "type": "boolean" },
+    "props": { "type": "object" },
+    "answer_schema": { "type": "object" },
+    "when": { "$ref": "#/$defs/condition" },
+    "clarification": { "$ref": "#/$defs/clarificationPolicy" },
+    "analysis": { "type": "object" },
+    "generated_from": { "type": "object" }
+  },
+  "$defs": {
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "operator", "value"],
+      "properties": {
+        "path": { "type": "string" },
+        "operator": { "enum": ["equals", "not_equals", "in", "not_in", "contains", "exists"] },
+        "value": {}
+      }
+    },
+    "clarificationPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "maximum_followups"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "trigger": { "enum": ["ai_assessment", "after_submission", "rule_conflict"] },
+        "maximum_followups": { "type": "integer", "minimum": 0, "maximum": 2 },
+        "goals": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

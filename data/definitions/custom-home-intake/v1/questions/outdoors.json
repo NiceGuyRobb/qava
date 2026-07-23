@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "topic_id": "outdoors",
+  "questions": [
+    {
+      "id": "garage",
+      "type": "defined",
+      "topic_id": "outdoors",
+      "path": "outdoors.garage",
+      "prompt": "What should the garage accommodate?",
+      "component": "structured_form",
+      "required": true,
+      "props": {
+        "fields": [
+          {
+            "key": "configuration",
+            "label": "Garage configuration",
+            "component": "single_select",
+            "options": [
+              "Attached",
+              "Detached",
+              "Tandem attached",
+              "No garage"
+            ]
+          },
+          {
+            "key": "stalls",
+            "label": "Vehicle capacity",
+            "component": "single_select",
+            "options": [
+              "1",
+              "2",
+              "3",
+              "4+"
+            ]
+          },
+          {
+            "key": "special_requirements",
+            "label": "Special requirements",
+            "component": "multi_select",
+            "options": [
+              "EV charging",
+              "Heated garage",
+              "Floor drain",
+              "Sink",
+              "Workshop",
+              "Car lift",
+              "Garage suite",
+              "Boat or recreational vehicle storage",
+              "Other"
+            ],
+            "allow_other": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "outdoor-living",
+      "type": "defined",
+      "topic_id": "outdoors",
+      "path": "outdoors.living",
+      "prompt": "How should the outdoor areas be used?",
+      "component": "multi_select",
+      "required": true,
+      "props": {
+        "options": [
+          "Covered dining",
+          "Outdoor kitchen",
+          "Casual seating",
+          "Fire pit",
+          "Garden",
+          "Pool",
+          "Hot tub",
+          "Children's play",
+          "Pet area",
+          "Quiet retreat",
+          "Low-maintenance landscaping"
+        ],
+        "allow_other": true
+      }
+    },
+    {
+      "id": "outdoor-seasonality",
+      "type": "defined",
+      "topic_id": "outdoors",
+      "path": "outdoors.seasonality",
+      "prompt": "During which seasons do you expect to use the outdoor spaces?",
+      "component": "multi_select",
+      "required": true,
+      "props": {
+        "options": [
+          "Spring",
+          "Summer",
+          "Autumn",
+          "Winter"
+        ]
+      }
+    },
+    {
+      "id": "cold-weather-outdoor-features",
+      "type": "conditional",
+      "topic_id": "outdoors",
+      "path": "outdoors.cold_weather_features",
+      "prompt": "What would make the outdoor space comfortable in colder weather?",
+      "component": "multi_select",
+      "required": false,
+      "when": {
+        "path": "outdoors.seasonality",
+        "operator": "contains",
+        "value": "Winter"
+      },
+      "props": {
+        "options": [
+          "Covered area",
+          "Infrared heaters",
+          "Outdoor fireplace",
+          "Wind protection",
+          "Snow-melt system",
+          "Enclosed seasonal room"
+        ]
+      }
+    }
+  ]
+}

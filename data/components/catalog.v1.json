@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "components": [
+    {
+      "name": "short_text",
+      "answer_shape": "string",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": true
+    },
+    {
+      "name": "long_text",
+      "answer_shape": "string",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": true
+    },
+    {
+      "name": "number",
+      "answer_shape": "number",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": true
+    },
+    {
+      "name": "single_select",
+      "answer_shape": "scalar",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": true
+    },
+    {
+      "name": "multi_select",
+      "answer_shape": "array",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": true
+    },
+    {
+      "name": "boolean",
+      "answer_shape": "boolean",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": false
+    },
+    {
+      "name": "address",
+      "answer_shape": "object",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": false
+    },
+    {
+      "name": "measurement",
+      "answer_shape": "object",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": true
+    },
+    {
+      "name": "budget_tiers",
+      "answer_shape": "scalar",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": false
+    },
+    {
+      "name": "ranking",
+      "answer_shape": "array",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": false
+    },
+    {
+      "name": "structured_form",
+      "answer_shape": "object",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": false
+    },
+    {
+      "name": "repeatable_group",
+      "answer_shape": "array",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": false
+    },
+    {
+      "name": "room_programme",
+      "answer_shape": "object",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": false
+    },
+    {
+      "name": "visual_cards",
+      "answer_shape": "scalar",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": false
+    },
+    {
+      "name": "file_upload",
+      "answer_shape": "asset_reference_array",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": false
+    },
+    {
+      "name": "tradeoff",
+      "answer_shape": "object",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": true
+    },
+    {
+      "name": "confirmation",
+      "answer_shape": "boolean",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": false
+    }
+  ]
+}

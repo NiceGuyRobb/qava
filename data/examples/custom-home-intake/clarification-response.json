@@ -1,0 +1,12 @@
+{
+  "needs_clarification": true,
+  "reason": "The ranking identifies important spaces but not the experience the client wants to protect.",
+  "question": {
+    "prompt": "What makes the kitchen your highest-priority space?",
+    "component": "multi_select",
+    "props": {
+      "options": ["Everyday family gathering", "Frequent entertaining", "Serious cooking", "Visual centrepiece", "Connection to outdoor living"],
+      "allow_other": true
+    }
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "topic_id": "household",
+  "questions": [
+    {
+      "id": "household-members",
+      "type": "defined",
+      "topic_id": "household",
+      "path": "household.members",
+      "prompt": "Who will live in the home?",
+      "component": "repeatable_group",
+      "required": true,
+      "props": {
+        "item_label": "Household member",
+        "minimum_items": 1,
+        "fields": [
+          {
+            "key": "relationship",
+            "label": "Relationship or role",
+            "component": "short_text"
+          },
+          {
+            "key": "life_stage",
+            "label": "Life stage",
+            "component": "single_select",
+            "options": [
+              "Young child",
+              "Teenager",
+              "Adult",
+              "Older adult"
+            ]
+          },
+          {
+            "key": "needs",
+            "label": "Relevant needs",
+            "component": "multi_select",
+            "options": [
+              "Private bedroom",
+              "Dedicated bathroom",
+              "Work or study space",
+              "Accessibility considerations",
+              "Independent living area",
+              "No special requirements"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "pets",
+      "type": "defined",
+      "topic_id": "household",
+      "path": "household.pets",
+      "prompt": "Will any pets live in the home?",
+      "component": "repeatable_group",
+      "required": false,
+      "props": {
+        "fields": [
+          {
+            "key": "type",
+            "label": "Type of pet",
+            "component": "short_text"
+          },
+          {
+            "key": "requirements",
+            "label": "Home-related requirements",
+            "component": "multi_select",
+            "options": [
+              "Pet wash",
+              "Secure outdoor area",
+              "Pet door",
+              "Feeding station",
+              "Litter area",
+              "Durable flooring",
+              "Other"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "daily-life",
+      "type": "defined",
+      "topic_id": "household",
+      "path": "household.daily_life",
+      "prompt": "Walk us through a typical weekday at home.",
+      "component": "long_text",
+      "required": true,
+      "clarification": {
+        "enabled": true,
+        "trigger": "ai_assessment",
+        "maximum_followups": 2,
+        "goals": [
+          "Identify peak household activity",
+          "Identify circulation and privacy needs",
+          "Identify storage and utility needs"
+        ]
+      }
+    },
+    {
+      "id": "entertaining-pattern",
+      "type": "defined",
+      "topic_id": "household",
+      "path": "household.entertaining",
+      "prompt": "How do you usually entertain at home?",
+      "component": "long_text",
+      "required": true,
+      "clarification": {
+        "enabled": true,
+        "trigger": "ai_assessment",
+        "maximum_followups": 2,
+        "goals": [
+          "Determine typical guest count",
+          "Determine formal versus casual preference",
+          "Determine indoor versus outdoor use",
+          "Determine overnight guest needs"
+        ]
+      }
+    }
+  ]
+}

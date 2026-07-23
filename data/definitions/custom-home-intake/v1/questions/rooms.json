@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "topic_id": "rooms",
+  "questions": [
+    {
+      "id": "space-priorities",
+      "type": "defined",
+      "topic_id": "rooms",
+      "path": "rooms.priorities",
+      "prompt": "Rank the spaces that should receive the most attention.",
+      "component": "ranking",
+      "required": true,
+      "props": {
+        "items": [
+          "Kitchen",
+          "Primary suite",
+          "Main living area",
+          "Outdoor living",
+          "Home office",
+          "Home gym or wellness",
+          "Guest accommodation",
+          "Mudroom and entry",
+          "Basement recreation",
+          "Garage",
+          "Wine storage",
+          "Sauna or cold plunge"
+        ],
+        "maximum_ranked": 6
+      },
+      "clarification": {
+        "enabled": true,
+        "trigger": "after_submission",
+        "maximum_followups": 1,
+        "goals": [
+          "Understand why the first-ranked space matters"
+        ]
+      }
+    },
+    {
+      "id": "room-programme",
+      "type": "defined",
+      "topic_id": "rooms",
+      "path": "rooms.programme",
+      "prompt": "Choose the rooms and spaces the home should include.",
+      "component": "room_programme",
+      "required": true,
+      "props": {
+        "statuses": [
+          "required",
+          "possible",
+          "not_needed"
+        ],
+        "groups": [
+          {
+            "id": "entry",
+            "title": "Entry & Main Floor",
+            "items": [
+              "Front foyer",
+              "Mudroom",
+              "Main-floor office or den",
+              "Powder room"
+            ]
+          },
+          {
+            "id": "living",
+            "title": "Living & Dining",
+            "items": [
+              "Great room",
+              "Open dining area",
+              "Formal dining room",
+              "Separate family room"
+            ]
+          },
+          {
+            "id": "kitchen",
+            "title": "Kitchen",
+            "items": [
+              "Kitchen",
+              "Walk-in pantry",
+              "Butler's pantry",
+              "Scullery or prep kitchen"
+            ]
+          },
+          {
+            "id": "private",
+            "title": "Bedrooms & Private Spaces",
+            "items": [
+              "Primary bedroom",
+              "Primary ensuite",
+              "Primary walk-in closet",
+              "Secondary bedrooms",
+              "Guest suite",
+              "In-law suite"
+            ]
+          },
+          {
+            "id": "special",
+            "title": "Special-Purpose Spaces",
+            "items": [
+              "Home office",
+              "Gym",
+              "Sauna",
+              "Home theatre",
+              "Games room",
+              "Wine cellar",
+              "Bar",
+              "Cold room"
+            ]
+          }
+        ],
+        "item_details": [
+          {
+            "key": "size",
+            "label": "Preferred size",
+            "component": "single_select",
+            "options": [
+              "Compact",
+              "Standard",
+              "Generous",
+              "Not sure"
+            ]
+          },
+          {
+            "key": "floor",
+            "label": "Preferred floor",
+            "component": "single_select",
+            "options": [
+              "Basement",
+              "Main floor",
+              "Upper floor",
+              "No preference"
+            ]
+          },
+          {
+            "key": "special_requirements",
+            "label": "Special requirements",
+            "component": "long_text"
+          }
+        ]
+      }
+    },
+    {
+      "id": "room-counts",
+      "type": "defined",
+      "topic_id": "rooms",
+      "path": "rooms.counts",
+      "prompt": "Confirm the core bedroom and bathroom counts.",
+      "component": "structured_form",
+      "required": true,
+      "props": {
+        "fields": [
+          {
+            "key": "bedrooms",
+            "label": "Bedrooms",
+            "component": "number",
+            "minimum": 1
+          },
+          {
+            "key": "full_bathrooms",
+            "label": "Full bathrooms",
+            "component": "number",
+            "minimum": 1
+          },
+          {
+            "key": "powder_rooms",
+            "label": "Powder rooms",
+            "component": "number",
+            "minimum": 0
+          }
+        ]
+      }
+    }
+  ]
+}

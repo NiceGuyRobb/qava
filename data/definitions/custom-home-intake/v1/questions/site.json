@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "topic_id": "site",
+  "questions": [
+    {
+      "id": "land-status",
+      "type": "defined",
+      "topic_id": "site",
+      "path": "site.status",
+      "prompt": "What is the current status of the land?",
+      "component": "single_select",
+      "required": true,
+      "props": {
+        "options": [
+          "Land owned",
+          "Under contract",
+          "Still searching",
+          "Not started looking"
+        ]
+      }
+    },
+    {
+      "id": "site-location",
+      "type": "conditional",
+      "topic_id": "site",
+      "path": "site.location",
+      "prompt": "Where is the property located?",
+      "component": "address",
+      "required": true,
+      "when": {
+        "path": "site.status",
+        "operator": "in",
+        "value": [
+          "Land owned",
+          "Under contract"
+        ]
+      }
+    },
+    {
+      "id": "site-known-constraints",
+      "type": "conditional",
+      "topic_id": "site",
+      "path": "site.constraints",
+      "prompt": "Are you aware of any site conditions or development restrictions?",
+      "component": "multi_select",
+      "required": false,
+      "when": {
+        "path": "site.status",
+        "operator": "in",
+        "value": [
+          "Land owned",
+          "Under contract"
+        ]
+      },
+      "props": {
+        "options": [
+          "Architectural controls",
+          "Setback requirements",
+          "Slope or grading challenges",
+          "Limited utility access",
+          "Flood or drainage concerns",
+          "Protected trees or vegetation",
+          "Access limitations",
+          "None known",
+          "Other"
+        ],
+        "allow_other": true
+      }
+    },
+    {
+      "id": "land-search-priorities",
+      "type": "conditional",
+      "topic_id": "site",
+      "path": "site.search_priorities",
+      "prompt": "What will matter most when choosing the property?",
+      "component": "ranking",
+      "required": true,
+      "when": {
+        "path": "site.status",
+        "operator": "in",
+        "value": [
+          "Still searching",
+          "Not started looking"
+        ]
+      },
+      "props": {
+        "items": [
+          "Location",
+          "Lot size",
+          "Views",
+          "Privacy",
+          "School access",
+          "Commute",
+          "Walkability",
+          "Development flexibility",
+          "Purchase price"
+        ],
+        "maximum_ranked": 5
+      }
+    }
+  ]
+}

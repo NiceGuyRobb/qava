@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "topic_id": "style",
+  "questions": [
+    {
+      "id": "overall-style",
+      "type": "defined",
+      "topic_id": "style",
+      "path": "style.overall",
+      "prompt": "Which direction feels closest to the home you imagine?",
+      "component": "visual_cards",
+      "required": true,
+      "props": {
+        "selection_mode": "single",
+        "allow_unsure": true,
+        "cards": [
+          {
+            "value": "contemporary",
+            "label": "Contemporary",
+            "description": "Clean lines and restraint",
+            "asset_ref": "style/contemporary"
+          },
+          {
+            "value": "farmhouse",
+            "label": "Farmhouse",
+            "description": "Warm, rustic, and unpretentious",
+            "asset_ref": "style/farmhouse"
+          },
+          {
+            "value": "midcentury",
+            "label": "Mid-century",
+            "description": "Warm materials and clean geometry",
+            "asset_ref": "style/midcentury"
+          },
+          {
+            "value": "japandi",
+            "label": "Japandi",
+            "description": "Quiet, natural, and minimal",
+            "asset_ref": "style/japandi"
+          },
+          {
+            "value": "mediterranean",
+            "label": "Mediterranean",
+            "description": "Textured, earthy, and sun-washed",
+            "asset_ref": "style/mediterranean"
+          }
+        ]
+      },
+      "clarification": {
+        "enabled": true,
+        "trigger": "ai_assessment",
+        "maximum_followups": 1,
+        "goals": [
+          "Identify the qualities that attracted the user"
+        ]
+      }
+    },
+    {
+      "id": "material-character",
+      "type": "defined",
+      "topic_id": "style",
+      "path": "style.material_character",
+      "prompt": "Which material qualities should be most visible?",
+      "component": "multi_select",
+      "required": true,
+      "props": {
+        "options": [
+          "Natural wood",
+          "Stone",
+          "Brick",
+          "Plaster",
+          "Metal accents",
+          "Large expanses of glass"
+        ]
+      }
+    },
+    {
+      "id": "inspiration-images",
+      "type": "defined",
+      "topic_id": "style",
+      "path": "style.inspiration_assets",
+      "prompt": "Add any images that capture what you like.",
+      "component": "file_upload",
+      "required": false,
+      "props": {
+        "accepted_types": [
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ],
+        "maximum_files": 15,
+        "maximum_file_size_mb": 10
+      },
+      "analysis": {
+        "enabled": true,
+        "type": "image_collection",
+        "outputs": [
+          "recurring_styles",
+          "materials",
+          "colours",
+          "spatial_patterns",
+          "confidence"
+        ]
+      }
+    }
+  ]
+}
