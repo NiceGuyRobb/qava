@@ -1,4 +1,4 @@
-# Qava — Topic-Driven Adaptive Interview Engine
+# Qavai — Topic-Driven Adaptive Interview Engine
 
 > A definition-driven consultation engine that combines a deterministic interview path with bounded AI clarification and evidence-backed analysis.
 
