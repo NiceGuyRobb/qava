@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "meta-questionnaire",
+  "version": 1,
+  "title": "Questionnaire Authoring",
+  "description": "Guided authoring for a questionnaire published through the registry adapter.",
+  "status": "draft",
+  "locale": "en",
+  "topics_file": "topics.json",
+  "question_files": ["questions/authoring.json"],
+  "component_catalog": "../../../components/catalog.v1.json",
+  "contract": "../../../contracts/v1/published-questionnaire.schema.json",
+  "metadata": {"question_count": 5}
+}

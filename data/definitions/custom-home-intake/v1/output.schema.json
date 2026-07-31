@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qava.dev/definitions/custom-home-intake/v1/output.schema.json",
+  "title": "Custom home planning result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project",
+    "site",
+    "household",
+    "structure",
+    "rooms",
+    "style",
+    "outdoors",
+    "budget",
+    "delivery"
+  ],
+  "properties": {
+    "project": { "type": "object" },
+    "site": { "type": "object" },
+    "household": { "type": "object" },
+    "structure": { "type": "object" },
+    "rooms": { "type": "object" },
+    "style": { "type": "object" },
+    "outdoors": { "type": "object" },
+    "budget": { "type": "object" },
+    "delivery": { "type": "object" }
+  }
+}

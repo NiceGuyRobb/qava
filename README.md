@@ -1,632 +1,806 @@
 # Qava
 
-Topic-driven adaptive interviews with deterministic progress and optional, bounded AI clarification.
+An output-driven Q&A engine with agent-assisted questionnaire design, adaptive interviewing, automatically selected answer controls, continuous result projection, and explainable result health.
 
-Qava is an interview engine for structured consultations that need to feel flexible without becoming unpredictable. A user can see the available topics, resume later, or jump directly to a topic. New sessions start at the first incomplete topic by definition order, and the user may immediately choose a different topic. The engine follows a published question definition, may ask one optional clarification when allowed, and then returns to the defined path.
-
-The core model is intentionally small:
+Qava has one essential loop:
 
 ```text
-Published Definition
-+ Session State
-+ User Action
-  ->
-Deterministic Evaluation
-  ->
-Updated Session State
-+ Renderable Session View
+Ask a question
+    -> capture a typed answer with the right UI
+    -> apply the answer to a declared output contract
+    -> evaluate the resulting draft
+    -> ask the most useful next question
 ```
 
-A custom-home intake is included as sample data. It demonstrates the engine, but it does not define the engine. The same runtime should support onboarding, assessments, inspections, applications, discovery interviews, and other structured conversations by loading a different definition.
+The purpose of a Qava interview is not merely to complete a questionnaire. Its purpose is to produce a specific, usable output.
 
-The most important boundary is what is persisted, what is derived, and what is generated at runtime.
+That output may ultimately become:
 
-| Kind | Examples | Rule |
-|---|---|---|
-| Persisted | Published definitions, latest answers by question ID, active topic, clarification state, session revision, lifecycle status, interaction history | Store the durable facts needed to resume, audit, and continue. |
-| Derived | Question applicability, topic progress, topic completion, session completion, current defined question, deterministic validation issues, result projection | Recalculate from the definition and session state. |
-| Generated and persisted | AI clarification prompt, clarification answered/skipped state, AI metadata needed for audit | Persist because it did not exist in the published definition. |
+- a JSON or NoSQL document;
+- one or more relational database records;
+- a CSV file;
+- an Excel workbook;
+- a message-bus message;
+- an API request;
+- or another structured artifact implemented by an output adapter.
+
+The MVP uses a typed JSON document as the canonical result. It continuously produces a preview after every accepted answer and publishes externally only through an explicit action. Additional destinations translate the same canonical result through pluggable adapters.
 
 ---
 
 ## Product Thesis
 
-Qava sits between a traditional form and an unrestricted AI interview.
+Qava turns an output requirement into an adaptive, renderable interview.
 
-Traditional forms are predictable but rigid. AI interviews are flexible but hard to validate, resume, audit, and complete consistently. Qava keeps the interview plan deterministic while allowing small moments of clarification where they are useful.
-
-The deterministic layer owns:
-
-- topics;
-- question order;
-- question applicability;
-- required answers;
-- progress;
-- validation;
-- topic completion;
-- session completion;
-- result projection.
-
-AI is optional. It may ask one useful follow-up when a definition permits it, but it cannot change the interview plan, write answers directly, or decide whether the interview is complete.
-
----
-
-## MVP Scope
-
-The MVP proves one loop:
+An author supplies an output contract describing the data that must be produced. Qava helps compile that contract into a questionnaire: questions, answer types, mappings, validation, and presentation metadata. During an interview, the runtime combines deterministic contract rules with a bounded agent to decide what to ask next, when clarification is useful, and how healthy the current result is.
 
 ```text
-Show topics
-    ->
-Create, resume, or select topic
-    ->
-Ask next applicable defined question
-    ->
-Store answer
-    ->
-Optionally ask one clarification
-    ->
-Return to the defined question path
-    ->
-Complete through deterministic rules
+Output contract
+    -> questionnaire compiler
+    -> published questionnaire
+    -> adaptive Q&A session
+    -> canonical result draft
+    -> output adapter
+    -> destination artifact
 ```
 
-The MVP includes:
+The engine owns the complete path from question to usable data:
 
-- immutable, versioned definitions;
-- topic navigation;
-- deterministic and conditional questions;
-- answers stored by question ID;
-- derived progress and completion;
-- optimistic concurrency using a session revision;
-- interaction history;
-- one optional clarification for eligible questions;
-- a structured result projected from the definition and answers.
+1. understand what the output requires;
+2. determine what information is missing;
+3. present an appropriate answer-capture control;
+4. capture a typed, normalized value;
+5. map that value into the result;
+6. evaluate result completeness and quality;
+7. choose the next useful question;
+8. publish through an output adapter when requested.
 
-The MVP does not include:
-
-- workflow or graph runtimes;
-- unrestricted AI agents;
-- domain-specific engine classes;
-- generated application code;
-- arbitrary generated UI components;
-- multi-step AI conversations;
-- health scoring;
-- topic summaries;
-- cross-topic insights;
-- full event sourcing.
-
-Those capabilities may be added later without changing the core runtime model.
+This is the product. Topic navigation, persistence, audit history, concurrency, and AI orchestration support this loop; they must not obscure it.
 
 ---
 
-## Design Principles
+## Design Goals
 
-1. **Definitions are immutable after publication.** A session references one exact definition version for its lifetime.
-2. **Answers are stored by question ID.** The evolving session is not the final domain document.
-3. **Results are projections.** The final output is produced by applying applicable answers to the output paths declared by their questions.
-4. **Topics are first-class navigation units.** They organize questions and provide stable progress and completion boundaries.
-5. **Completion is deterministic.** Required applicable questions and deterministic validation rules decide completion.
-6. **AI clarification is optional and bounded.** It may improve an answer, but it cannot block completion.
-7. **The backend owns interview logic.** The client renders the current session view and submits user actions.
-8. **Derived state stays derived.** Topic progress, applicability, current question, and completion are calculated from the definition and answers.
-9. **Generated state is explicit.** Clarification prompts and clarification answered/skipped state are persisted because they do not exist in the published definition.
-10. **The engine remains domain-neutral.** It understands topics, questions, conditions, components, answers, interactions, and paths.
+### 1. Output first
 
----
+The declared output contract is the source of truth. Questions exist because the output needs evidence or values.
 
-## Repository Shape
+### 2. Simple runtime model
+
+The runtime should be understandable as:
 
 ```text
-data/
-├── components/
-│   └── catalog.v1.json
-├── contracts/
-│   └── v1/
-│       ├── definition.schema.json
-│       ├── interaction.schema.json
-│       ├── question.schema.json
-│       └── session.schema.json
-├── definitions/
-│   └── custom-home-intake/
-│       └── v1/
-│           ├── definition.json
-│           ├── topics.json
-│           └── questions/
-└── examples/
-    └── custom-home-intake/
-        ├── clarification-request.json
-        ├── clarification-response.json
-        ├── result.json
-        └── session.snapshot.json
+Published Questionnaire + Session Answers -> Next Question + Result Draft + Health
 ```
 
-### Components
+Qava is not a general workflow language, graph runtime, autonomous multi-agent platform, or form-code generator.
 
-`data/components` contains the declarative component vocabulary supported by clients. For the MVP, this is a fixed catalog rather than a plugin system.
+### 3. UI is part of the engine
 
-Initial components may include:
+Question metadata must be rich enough for the system to select an appropriate UI component and capture the correct machine value. Clients render a component specification returned by the engine; they do not contain questionnaire-specific business logic.
 
-- `short_text`
-- `long_text`
-- `number`
-- `single_select`
-- `multi_select`
-- `boolean`
-- `money`
-- `money_range`
-- `date`
-- `date_range`
-- `confirmation`
+### 4. Agentic where judgment helps, deterministic where correctness matters
 
-AI-generated clarifications should initially be limited to `short_text`.
+AI may propose questions, infer presentation, choose among unresolved requirements, formulate prompts, and request clarification. Schemas, identifiers, validation, mappings, accepted values, publication, and contract satisfaction remain enforceable and auditable.
 
-### Contracts
+### 5. Useful at every stage
 
-`data/contracts/v1` contains stable, domain-neutral JSON Schemas for published definitions and runtime records. These schemas define contracts, not orchestration logic.
+Every accepted answer produces a new canonical result draft and an updated health assessment. A user or downstream system need not wait until the questionnaire is complete to inspect useful output.
 
-Some schemas may describe future capabilities. Their presence in the repository does not make those capabilities part of the MVP runtime.
+### 6. Explainable health
 
-### Definitions
+A headline score is supported by dimensions, evidence, and attention items. The score must never be an unexplained AI opinion.
 
-`data/definitions/custom-home-intake/v1` contains the authoring source for one immutable sample definition version.
+### 7. Compile flexibility into stability
 
-- `definition.json` is the bundle manifest and version identity.
-- `topics.json` defines topic metadata and order.
-- `questions/` contains the questions for each topic.
-
-Before runtime use, authoring files are assembled, validated, and published as one immutable definition document.
-
-### Examples
-
-`data/examples/custom-home-intake` contains non-authoritative examples of runtime requests and records. Examples are useful for development, tests, and documentation, but they are not definition source data and must never be written back into a published definition.
+AI may help design a questionnaire, but a published questionnaire is immutable and versioned. Runtime adaptation occurs inside declared bounds so sessions remain resumable, testable, and reproducible.
 
 ---
 
-## Definition Lifecycle
+## The Two Main Phases
 
-Definitions are authored as readable files and loaded at runtime as one immutable document.
+Qava separates questionnaire creation from questionnaire execution.
+
+## 1. Authoring and Compilation
+
+The primary authoring input is an output contract. For the MVP, that contract is JSON Schema plus Qava annotations where needed.
+
+The compiler derives or proposes:
+
+- requirements that need answers;
+- question prompts;
+- answer types and constraints;
+- stable choice IDs and display labels;
+- output mappings;
+- dependencies and applicability conditions;
+- UI component specifications;
+- health weights and criticality;
+- agent permissions and boundaries.
+
+Some decisions are deterministic. Others may be inferred by an authoring agent. Ambiguous decisions are presented to the author for confirmation.
+
+The authoring agent has one bounded operation. Given an output schema, field descriptions, the component catalog, and existing author decisions, it returns structured proposals for questions, answer metadata, mappings, and compatible components. Every proposal includes confidence and reasons. The compiler validates each proposal; the author accepts, changes, or rejects unresolved proposals before publication. The agent never publishes a questionnaire itself.
+
+The compiler produces a self-contained, immutable **Published Questionnaire**. Runtime execution does not depend on repeating authoring-time inference.
 
 ```text
-Authoring files
-    -> assemble
-    -> validate JSON Schemas
-    -> validate component names
-    -> validate unique question IDs
-    -> validate output path collisions
-Published definition document
-    ->
-Runtime sessions
+Draft output contract
+    -> inspect fields and constraints
+    -> propose requirements and questions
+    -> infer UI components
+    -> ask author only about ambiguity
+    -> validate mappings and IDs
+    -> publish immutable questionnaire version
 ```
 
-A published definition is identified by `id` and `version`:
+The author may override prompts, grouping, ordering preferences, UI choices, weights, and agent policy without writing application code.
+
+Authoring is a draft workflow rather than a runtime session. A draft exposes unresolved decisions, accepts author choices, reruns validation, and becomes immutable only when the author explicitly publishes it. Component confirmation is one of these draft decisions, not a user-facing interview interaction.
+
+## 2. Runtime Interview
+
+The runtime loads one published questionnaire version and manages a session against it.
+
+After every accepted action it returns one complete session view containing:
+
+- current progress;
+- the current question or clarification;
+- the component specification required to answer it;
+- the canonical result draft;
+- result health and attention items;
+- publication readiness.
+
+The runtime agent may adapt the interview within the published policy. It cannot change the output contract, invent destination fields, bypass validation, silently reinterpret stable choice IDs, or publish an artifact.
+
+---
+
+## Core Model
+
+The conceptual model has six primary entities.
+
+### Output Contract
+
+The output contract defines the shape and rules of the desired artifact. It describes what must be produced, independently of how questions are phrased.
+
+For the MVP it is represented by JSON Schema:
 
 ```json
 {
-  "id": "custom-home-intake",
-  "version": 1
-}
-```
-
-Changing a published definition creates a new version. Existing sessions continue to reference the version against which they were started.
-
----
-
-## Core Entities
-
-### Definition
-
-A definition describes the expected interview structure. It owns topic metadata, question order, prompts, components, answer constraints, conditions, output paths, required status, and clarification eligibility.
-
-It does not own session answers, active navigation, generated clarifications, progress snapshots, interaction history, or analysis results.
-
-```json
-{
-  "id": "custom-home-intake",
-  "version": 1,
-  "title": "Custom Home Planning",
-  "topics": [
-    {
-      "id": "budget",
-      "title": "Budget",
-      "description": "Investment, financing, priorities, and contingency",
-      "questions": [
-        {
-          "id": "budget-target-range",
-          "path": "budget.target_range",
-          "prompt": "What total project budget are you considering?",
-          "component": "money_range",
-          "required": true,
-          "props": {
-            "currencies": ["CAD", "USD"],
-            "allow_unknown": true
-          }
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["customer", "favourite_colour_id"],
+  "properties": {
+    "customer": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
         }
-      ]
+      }
+    },
+    "favourite_colour_id": {
+      "type": "string",
+      "enum": ["red", "green", "blue"]
     }
-  ]
-}
-```
-
-Array order is canonical unless an authoring requirement proves that explicit numeric ordering is needed.
-
-### Topic
-
-A topic is both a navigation unit and a deterministic collection goal. Each defined question belongs to exactly one primary topic.
-
-Example custom-home topics:
-
-```text
-Custom Home Planning
-├── Project
-├── Land & Site
-├── Household & Lifestyle
-├── Home Structure
-├── Rooms & Spaces
-├── Style & Character
-├── Exterior & Outdoor Living
-└── Budget & Delivery
-```
-
-A topic does not need persisted progress state. Its status can be derived from applicable questions, required questions, recorded answers, and deterministic validation issues.
-
-### Question
-
-A defined question has a stable identity and one declared output path.
-
-```json
-{
-  "id": "bedroom-count",
-  "path": "rooms.bedrooms.count",
-  "prompt": "How many bedrooms should the home have?",
-  "component": "number",
-  "required": true,
-  "props": {
-    "minimum": 1,
-    "maximum": 12
   }
 }
 ```
 
-A conditional question is still a defined question. It includes a small, declarative condition.
+The contract governs result shape and validation. It does not need to contain all presentation details.
+
+### Requirement
+
+A requirement is an addressable unit of output need. It connects the output contract to the interview.
 
 ```json
 {
-  "id": "home-office-details",
-  "path": "rooms.home_office",
-  "prompt": "What should the home office support?",
-  "component": "multi_select",
-  "required": true,
-  "when": {
-    "question_id": "special-spaces",
-    "operator": "contains",
-    "value": "home_office"
+  "id": "favourite-colour",
+  "target": "/favourite_colour_id",
+  "value_schema": {
+    "type": "string",
+    "enum": ["red", "green", "blue"]
   },
+  "required": true,
+  "criticality": "normal"
+}
+```
+
+In the MVP, a requirement is satisfied by:
+
+- one direct answer copied to its target; or
+- several declared answers composed into one value.
+
+Requirements, not question count, are the basis of completion and health.
+
+For the MVP, think of a requirement simply as an output field that needs an answer. It is derived from an addressable output field and its schema, not a second competing schema or an independently managed business object. The explicit ID exists so questions, health evidence, and provenance can refer to an output need without depending on a fragile display name. Most readers can hold four working entities — output contract, question, session, and result. The standalone requirement concept only earns its keep when a single output need genuinely spans multiple fields.
+
+Post-MVP, a requirement may also be satisfied by a deterministic derived value or an agent-assisted extraction that is validated before acceptance. Those modes are deferred so the core loop stays small.
+
+### Question
+
+A question is a request for evidence or a value needed by one or more requirements.
+
+```json
+{
+  "id": "favourite-colour-question",
+  "requirement_ids": ["favourite-colour"],
+  "prompt": "What is your favourite colour?",
+  "answer": {
+    "schema": {
+      "type": "string",
+      "enum": ["red", "green", "blue"]
+    },
+    "choices": [
+      { "id": "red", "label": "Red" },
+      { "id": "green", "label": "Green" },
+      { "id": "blue", "label": "Blue" }
+    ]
+  },
+  "mapping": {
+    "target": "/favourite_colour_id",
+    "mode": "direct"
+  },
+  "presentation": {
+    "component": "radio_group"
+  }
+}
+```
+
+The displayed label and stored value are intentionally different. Selecting **Green** stores the stable ID `green`, not an arbitrary display string.
+
+Choice IDs are immutable within a published questionnaire version. A label may be corrected without changing its machine meaning during drafting; changing the meaning or identifier after publication requires a new questionnaire version.
+
+Questions may be authored directly or generated during compilation. At runtime, an agent may formulate an allowed question or clarification, but it must bind the interaction to declared requirement IDs and an accepted answer schema.
+
+A question may have a small applicability condition referencing accepted answer IDs. The MVP condition vocabulary is deliberately limited to `equals`, `contains`, and `exists`; nested scripts and a general expression language are out of scope. Applicability is recalculated after every accepted answer.
+
+### Component Specification
+
+A component specification is a domain-neutral instruction to a renderer.
+
+```json
+{
+  "name": "radio_group",
   "props": {
-    "options": [
-      "Video calls",
-      "Two workstations",
-      "Client meetings",
-      "Built-in storage"
+    "choices": [
+      { "value": "red", "label": "Red" },
+      { "value": "green", "label": "Green" },
+      { "value": "blue", "label": "Blue" }
     ]
   }
 }
 ```
 
-Conditions should reference stable question IDs, not output paths. The initial condition vocabulary should remain small: `equals`, `contains`, and `exists`.
-
-Nested expressions, scripts, variables, and a general workflow language are out of scope for the MVP.
-
-For the MVP, every displayed defined question should be required. Optionality should be expressed through applicability rules. AI clarifications are the only optional interactions.
+It describes presentation but does not redefine the answer contract. The answer schema remains authoritative for accepted values.
 
 ### Session
 
-A session stores the authoritative, evolving interview state.
+A session is the authoritative evolving state of one interview:
+
+- questionnaire identity and version;
+- latest accepted answers;
+- current navigation context;
+- generated runtime interactions;
+- revision number;
+- lifecycle status;
+- publication records.
+
+Progress, result drafts, health, applicability, and next-question candidates are derived whenever possible.
+
+### Result Projection
+
+The result projection is the current canonical output document built from accepted answers and mappings.
+
+It is available at every session revision:
 
 ```json
 {
-  "id": "session-123",
-  "definition_id": "custom-home-intake",
-  "definition_version": 1,
-  "revision": 18,
-  "lifecycle_status": "active",
-  "active_topic_id": "budget",
-  "answers": {
-    "budget-target-range": {
-      "value": {
-        "minimum": 700000,
-        "maximum": 900000,
-        "currency": "CAD"
-      },
-      "answered_at_revision": 17
-    }
-  },
-  "clarifications": {
-    "design-priorities": {
-      "status": "skipped",
-      "clarification_id": "clarification-456"
-    }
-  }
-}
-```
-
-The session answer map contains the latest accepted value for each question. Editing an answer overwrites that latest value and appends a new interaction record.
-
-The session lifecycle status is not the same as deterministic completion. For the MVP, lifecycle status should be `active`, `submitted`, or `archived`. Completion is derived from the definition and current answers. A session may be submitted only after deterministic completion has been reached.
-
-The session should not persist topic progress, topic completion, current defined question, applicability results, validation issues, health scores, or the projected final document. Those values can be derived from the definition and current answers.
-
-### Interaction
-
-An interaction is an append-only record of what was shown and what the user submitted. It supports audit, debugging, replay, analytics, clarification tracing, and result explanation.
-
-```json
-{
-  "id": "interaction-456",
   "session_id": "session-123",
-  "session_revision": 18,
-  "kind": "defined_question",
-  "action": "answer_updated",
-  "topic_id": "budget",
-  "question_id": "budget-target-range",
-  "question": {
-    "prompt": "What total project budget are you considering?",
-    "component": "money_range"
+  "questionnaire": {
+    "id": "customer-preferences",
+    "version": 1
   },
-  "answer": {
-    "minimum": 700000,
-    "maximum": 900000,
-    "currency": "CAD"
+  "revision": 7,
+  "status": "in_progress",
+  "data": {
+    "customer": {
+      "name": "Ada"
+    },
+    "favourite_colour_id": "green"
+  },
+  "health": {
+    "score": 82,
+    "readiness": "needs_attention"
   }
 }
 ```
 
-Current state remains fast to read while interactions retain history without introducing full event sourcing.
-
-Every accepted user action appends an interaction record. Useful action names include `answer_created`, `answer_updated`, `clarification_answered`, `clarification_skipped`, and `navigation_changed`.
+The projection is not the session and is not merely a transcript. It is the typed artifact the interview currently supports.
 
 ---
 
-## Runtime Flow
+## Automatic UI Component Selection
 
-For the active topic, the engine calculates the next interaction in this order:
+Automatic component selection is a first-class Qava capability.
 
-1. Return a persisted pending clarification, if one exists for the topic.
-2. Find the first applicable unanswered defined question.
-3. If none exists, evaluate deterministic validation rules.
-4. If no blocking issue exists, derive the topic as complete in the returned view.
-5. Continue to another incomplete topic or derive the session as complete.
+The engine resolves presentation from the answer contract and question context. The result must be predictable at runtime while allowing AI assistance during questionnaire compilation.
 
-Defined questions are derived from the published definition and current answers. AI clarifications are generated and persisted. Deterministic validation issues are derived from explicit validation rules.
+## Resolution Strategy
 
-```mermaid
-flowchart TD
-    Start[Resolve requested or active topic] --> Pending{Pending clarification?}
-    Pending -->|Yes| Clarification[Return clarification]
-    Pending -->|No| Defined{Applicable unanswered question?}
-    Defined -->|Yes| Return[Return defined question]
-    Defined -->|No| Valid{Blocking deterministic issue?}
-    Valid -->|Yes| Validation[Return validation interaction]
-    Valid -->|No| Complete[Topic is complete]
-    Complete --> More{Another incomplete topic?}
-    More -->|Yes| Start
-    More -->|No| Result[Session is complete]
-```
+Component resolution uses this precedence:
 
-The normal experience remains predictable:
+1. **Author override** — an explicit compatible component wins.
+2. **Deterministic inference** — schema shape and constraints select a component when the answer is unambiguous.
+3. **Agent recommendation** — semantic context resolves choices among compatible components.
+4. **Author confirmation** — unresolved or low-confidence decisions are surfaced during authoring.
+5. **Safe fallback** — a generic schema-compatible component is used when policy permits it.
 
-```text
-Defined Q1
-Defined Q2
-Optional clarification
-Defined Q3
-Defined Q4
-Topic complete
-```
+The resolved component is stored in the published questionnaire. Runtime clients do not invoke an AI model merely to choose a control.
 
----
+## Deterministic Examples
 
-## Applicability and Answer Retention
+| Answer metadata | Default component | Stored value |
+|---|---|---|
+| `boolean` | `boolean_choice` | `true` or `false` |
+| string enum, one value, 2–5 choices | `radio_group` | choice ID |
+| string enum, one value, many choices | `select` or searchable `combobox` | choice ID |
+| array of enum values | `checkbox_group` or multi-select | choice ID array |
+| short unconstrained string | `text_input` | string |
+| long or descriptive string | `textarea` | string |
+| integer or number with bounds | `number_input` or slider when appropriate | number |
+| currency annotation | `money_input` | amount and currency |
+| date format | `date_picker` | ISO date |
+| date-time format | `datetime_picker` | ISO timestamp |
+| address annotation | `address_input` | structured address object |
+| file/media annotation | `file_upload` | durable asset reference |
+| array of objects | `repeating_group` | array of typed items |
 
-Applicability is recalculated after every accepted answer.
+Cardinality, option count, accessibility, device capability, and author policy refine these defaults.
 
-If an earlier answer changes and a question becomes inapplicable:
+For example, an enum does not always imply radio buttons. Five visible options may suit a radio group, while fifty options call for a searchable combobox. Both capture the same stable choice ID.
 
-- its answer remains in the session answer map;
-- it is ignored for progress, completion, and result projection;
-- its previous interactions remain available for audit.
+## Collections and Dynamic Options
 
-This avoids destructive deletion and allows the answer to become active again if conditions later change. Only currently applicable answers are projected into the result.
+Two capabilities let the same inference handle variable-length and context-dependent answers.
 
----
+**Collections.** A `repeating_group` captures an array of typed items, such as a list of contacts or line items. Each item field resolves its own control through the same resolution strategy — resolution is recursive — within a bounded nesting depth. The stored value is an array of typed objects, not free text.
 
-## Completion
+**Dynamic option sources.** Some choices are not fixed when a questionnaire is authored. A question may source its choices from a named system provider instead of a static enum, while still storing a stable ID. This keeps the label/value separation intact for options that are only known at runtime.
 
-A topic is complete when all applicable required defined questions are answered and all blocking deterministic validation issues are resolved.
+## Semantic Assistance
 
-A session is complete when every topic containing applicable required questions is complete.
+Schema alone may not distinguish between compatible controls. An authoring agent may use:
 
-The MVP should not include optional topics. Optionality should be handled through conditional or non-applicable questions.
+- the question's wording and intent;
+- requirement description;
+- output field semantics;
+- option count and labels;
+- surrounding questions;
+- expected user population;
+- rendering channel and accessibility constraints.
 
-AI-generated clarification does not block completion.
-
-```text
-Deterministic rules decide completion.
-AI may improve understanding.
-```
-
----
-
-## Bounded AI Clarification
-
-AI is optional intelligence around the deterministic interview. It is not the interview itself.
-
-For an eligible answer, AI may assess whether one additional piece of context would be useful and return one schema-constrained clarification.
-
-MVP limits:
-
-- only questions explicitly marked as clarification-eligible are assessed;
-- no more than one clarification is created per defined question;
-- the clarification is optional and skippable;
-- the clarification uses `short_text` only;
-- the server assigns its identity, parent question, and topic;
-- the model cannot create a result path;
-- the model cannot write session answers directly;
-- the model cannot modify the definition;
-- the model cannot mark a topic or session complete;
-- invalid output, timeout, or model failure continues to the next defined question.
-
-Clarification state is stored by parent question so the engine can enforce the one-clarification rule even after a clarification is answered, skipped, or fails.
+The agent returns a structured recommendation:
 
 ```json
 {
-  "clarifications": {
-    "design-priorities": {
-      "status": "skipped",
-      "clarification_id": "clarification-456"
+  "component": "radio_group",
+  "confidence": 0.94,
+  "reasons": [
+    "The answer is a required single choice.",
+    "There are only three stable options.",
+    "Displaying all options reduces interaction cost."
+  ]
+}
+```
+
+The compiler verifies that the component can produce values accepted by the answer schema. Agent confidence never overrides compatibility.
+
+## Component Catalog
+
+The component catalog defines the vocabulary supported by a renderer:
+
+- component name and version;
+- compatible answer-schema shapes;
+- accepted presentation properties;
+- capabilities and constraints;
+- accessibility expectations;
+- fallback component.
+
+The MVP may have one built-in web catalog and renderer. The contract is intentionally pluggable so another renderer can map the same semantic component specification to native mobile, terminal, voice, or other UI controls.
+
+A renderer may vary visual appearance, but it must preserve answer semantics.
+
+---
+
+## Agentic Interviewing
+
+Qava uses a bounded agent, not an unrestricted agent.
+
+The agent's goal is to improve the result efficiently by selecting or formulating the most useful allowed interaction.
+
+It may:
+
+- choose the next unresolved requirement instead of following a rigid order;
+- rephrase an approved question for clarity while preserving meaning;
+- ask a schema-constrained clarification;
+- recognize that an earlier answer satisfies another requirement;
+- propose a normalized value extracted from free text;
+- identify ambiguity, contradiction, or weak evidence;
+- recommend that the user review an existing answer;
+- explain why a question matters to the output.
+
+It may not:
+
+- alter the published output contract;
+- create arbitrary destination fields;
+- accept a value that fails its schema;
+- fabricate an answer;
+- silently replace a user's accepted answer;
+- mark a requirement satisfied without evidence;
+- hide unresolved blocking issues;
+- perform an external publication side effect;
+- escape the questionnaire's declared agent policy.
+
+## Next-Question Decision
+
+The engine first creates a deterministic set of eligible interactions:
+
+1. unresolved required requirements;
+2. invalid or conflicting accepted answers;
+3. optional requirements that improve health;
+4. allowed clarifications for ambiguous evidence;
+5. review interactions when a prior answer needs confirmation.
+
+The agent may rank that bounded set using expected information gain, user context, interview coherence, and requirement criticality. If the agent is unavailable or its response is invalid, deterministic ordering provides a complete fallback.
+
+This preserves a key property:
+
+```text
+AI improves the interview, but the interview remains operable without AI.
+```
+
+## Runtime-Generated Questions
+
+A generated question is permitted only when it declares:
+
+- the requirement it serves;
+- the answer schema it must satisfy;
+- an approved component or resolvable presentation contract;
+- its reason for being asked;
+- whether it is required, optional, or clarifying;
+- the policy limit under which it was generated.
+
+Generated interactions are persisted for resume, audit, and reproducibility. Their answers enter the result only through validated mappings.
+
+The MVP should keep runtime generation conservative: choose and rephrase compiled questions, plus ask bounded clarifications. Broader question synthesis can be enabled later without changing the core contracts.
+
+---
+
+## Answers, Evidence, and Mapping
+
+An accepted answer contains more than a raw value:
+
+```json
+{
+  "question_id": "favourite-colour-question",
+  "requirement_ids": ["favourite-colour"],
+  "value": "green",
+  "display_value": "Green",
+  "source": "user",
+  "answered_at_revision": 7
+}
+```
+
+Only `value` participates in typed projection. `display_value` is convenience metadata and cannot replace the stable machine value.
+
+Mapping modes should remain small:
+
+- `direct` — copy the accepted value to one target;
+- `compose` — combine declared answers into an object or array;
+
+These two modes are sufficient for the MVP. Later extensions may add named deterministic transforms or agent-assisted extraction from free text. Such extraction produces only a proposal: it must pass the target schema and be confirmed when policy requires it.
+
+All mappings target declared output locations. Mapping failures become attention items; they do not silently corrupt the result.
+
+If an earlier answer changes, dependent mappings, applicability, health, and projections are recalculated. Historical interactions remain available for audit.
+
+---
+
+## Continuous Result Projection
+
+The canonical result draft is rebuilt or incrementally updated after every accepted answer.
+
+For each active mapping, the projector:
+
+1. locates accepted supporting answers;
+2. validates their typed values;
+3. applies the declared mapping;
+4. validates the affected result region;
+5. records provenance from output value to supporting answer;
+6. reports unresolved requirements and mapping issues.
+
+The result has three useful statuses:
+
+- `in_progress` — useful draft, but required requirements remain unresolved;
+- `ready` — contract-valid and eligible for publication;
+- `published` — a specific revision has been delivered successfully by an adapter.
+
+`Ready` does not mean perfect. It means the configured publication gate has been satisfied.
+
+Health has no separate lifecycle. Its `readiness` value explains the current projection status: `not_ready` maps to `in_progress`, while `ready` maps to `ready`. `needs_attention` is an advisory signal and may accompany either status depending on the publication policy. `published` is recorded only by a successful adapter receipt.
+
+---
+
+## Result Health
+
+Health evaluates the fitness of the current result, not merely how many questions have been answered.
+
+The MVP reports five dimensions:
+
+### Completeness
+
+How much required and weighted output information is present?
+
+### Validity
+
+Does the projected output satisfy its schemas and deterministic business rules? When a result targets an adapter with a validation gate, validity may include a dry run of that gate so blocking structural errors surface as attention items before publication is attempted.
+
+### Confidence
+
+How strong is the evidence supporting mapped values? Direct typed user selections generally have higher confidence than unconfirmed agent extraction.
+
+### Consistency
+
+Are related values mutually compatible, with no unresolved contradictions?
+
+### Specificity
+
+Are values sufficiently precise for their intended use, rather than merely present?
+
+Each dimension is scored from 0 to 100 using published, inspectable rules. A weighted headline score summarizes the dimensions:
+
+$$
+H = \frac{\sum_{d \in D} w_d s_d}{\sum_{d \in D} w_d}
+$$
+
+where $s_d$ is a dimension score and $w_d$ is its configured weight.
+
+The score is accompanied by a readiness state and concrete attention items:
+
+```json
+{
+  "score": 82,
+  "readiness": "needs_attention",
+  "dimensions": {
+    "completeness": 90,
+    "validity": 100,
+    "confidence": 75,
+    "consistency": 100,
+    "specificity": 60
+  },
+  "attention": [
+    {
+      "code": "ambiguous-budget",
+      "severity": "warning",
+      "requirement_id": "project-budget",
+      "message": "The budget is present but does not say whether land is included.",
+      "recommended_action": "Ask a clarification about budget scope."
     }
-  }
+  ]
 }
 ```
 
-Initial statuses should remain small: `pending`, `answered`, `skipped`, `not_needed`, and `failed`.
+Numerical scores are never the sole publication criterion. Blocking schema errors and required missing values remain explicit gates. Agent-produced quality observations must cite supporting answers and may affect a dimension only according to published policy.
 
-Clarification policy on a defined question:
-
-```json
-{
-  "id": "design-priorities",
-  "path": "vision.priorities",
-  "prompt": "What matters most in the design of your home?",
-  "component": "long_text",
-  "required": true,
-  "clarification": {
-    "enabled": true,
-    "goal": "Identify the user's highest priority or an important trade-off"
-  }
-}
-```
-
-Model response contract:
-
-```json
-{
-  "needs_clarification": true,
-  "reason": "The answer describes several priorities without identifying which should be protected first.",
-  "prompt": "If a trade-off becomes necessary, which priority should be protected first?"
-}
-```
-
-Stored runtime interaction:
-
-```json
-{
-  "id": "clarification-456",
-  "kind": "clarification",
-  "topic_id": "vision",
-  "parent_question_id": "design-priorities",
-  "prompt": "If a trade-off becomes necessary, which priority should be protected first?",
-  "component": "short_text",
-  "required": false
-}
-```
-
-The clarification answer is attached to the parent answer context and is not assigned an arbitrary domain output path.
+Health is revision-specific. The same session may have different health assessments as answers change.
 
 ---
 
-## Deterministic Validation
+## Output Adapters and Publication
 
-Blocking follow-ups must come from explicit rules, not AI judgment.
+The canonical JSON result separates interview logic from destination side effects.
 
-Examples:
+An output adapter implements a small contract:
 
-- a minimum value exceeds a maximum value;
-- an end date occurs before a start date;
-- an answer contradicts another declared answer;
-- a required structured field is missing.
-
-Validation interactions may block completion because the trigger and resolution are deterministic.
-
-For the MVP, validation issues should be derived each time from validation rules instead of persisted as pending generated interactions. If a validation is shown or resolved, that user-facing event can still be recorded in the interaction history.
-
-```json
-{
-  "kind": "validation",
-  "topic_id": "budget",
-  "question_id": "budget-target-range",
-  "message": "The minimum budget cannot exceed the maximum budget.",
-  "component": "money_range"
-}
+```text
+validate(result, destination configuration)
+preview(result)
+publish(result, idempotency key)
 ```
+
+Potential adapters include:
+
+- JSON document;
+- questionnaire registry (self-hosted authoring);
+- MongoDB or another document store;
+- relational table mapping;
+- CSV;
+- Excel workbook;
+- Kafka, Service Bus, or another message broker;
+- HTTP API request.
+
+The MVP implements the JSON document adapter, and the questionnaire registry adapter once self-hosted authoring is enabled.
+
+## Preview and Publish
+
+Projection is continuous and side-effect free. Publication is explicit.
+
+```text
+Every answer -> update draft and health
+Explicit publish -> validate gate -> invoke adapter -> record receipt
+```
+
+This prevents partially answered interviews from accidentally writing records or emitting messages. A later adapter policy may support continuous synchronization, but it is not the default behavior.
+
+Publication uses the exact session revision requested. It is idempotent and produces a receipt containing adapter identity, destination, revision, timestamp, status, and external reference where available.
 
 ---
 
-## Session View
+## Published Questionnaire
 
-The backend returns one renderable session view after every read or mutation.
+A published questionnaire is the immutable runtime package. It contains:
+
+- identity and version;
+- canonical output schema;
+- requirements;
+- questions and answer schemas;
+- stable choices;
+- mappings and deterministic transforms;
+- applicability and validation rules;
+- resolved component specifications;
+- grouping and navigation metadata;
+- health policy;
+- agent policy;
+- output adapter configuration schema.
+
+Authoring sources may be split across readable files. Publication assembles and validates them as one document.
+
+Publication checks include:
+
+- unique IDs;
+- valid requirement-to-output targets;
+- valid question-to-requirement links;
+- compatible answer schemas and UI components;
+- stable and unique choice IDs;
+- non-conflicting output mappings;
+- valid dependency references;
+- valid deterministic transforms;
+- satisfiable required output fields;
+- valid health weights and publication gates;
+- bounded agent permissions.
+
+Changing a published questionnaire creates a new version. Existing sessions remain attached to their original version unless an explicit migration is designed and executed.
+
+---
+
+## Administration: Self-Hosted Authoring
+
+Qava administers itself. The questionnaire builder is not a separate application; it is a Qava questionnaire whose output is another questionnaire.
+
+Because a published questionnaire is a JSON document with a schema, that schema can serve as an output contract:
+
+```text
+Meta output contract  = the published-questionnaire schema
+Answers               = questionnaire-design decisions
+Result projection     = a questionnaire document
+Publication           = register a new published questionnaire version
+```
+
+Every engine capability is reused rather than rebuilt:
+
+- automatic UI selection renders the builder itself — choosing a control is an enum question, and entering options is a collection question;
+- the authoring agent proposes prompts, mappings, and components for the questionnaire being designed;
+- health reports how complete and coherent the in-progress questionnaire is;
+- the publication gate becomes the meta interview's validation, surfaced live as validity attention items;
+- a registry adapter performs the explicit, gated, idempotent publication.
+
+### Registry Adapter
+
+The registry adapter's `validate` step is the standard questionnaire publication gate. Its `publish` step writes the canonical result into the Published Questionnaires store as a new immutable version and returns a receipt of `{ id, version }`. Republishing an edited questionnaire creates the next version, consistent with normal versioning.
+
+### What the Meta Contract Needs
+
+Self-hosting requires two capabilities beyond a flat questionnaire, both already defined for general use:
+
+1. **Collections.** A questionnaire holds a variable number of questions, and each holds a variable number of choices. The `repeating_group` component captures these as arrays of typed items, resolving each item field through the same inference rules within a bounded nesting depth.
+2. **Dynamic option sources.** Some choices are not fixed at authoring time — for example, "which component?" is drawn from the live component catalog. A question sources those choices from a named system provider while still storing a stable ID.
+
+### Bootstrap
+
+The first meta-questionnaire is authored once by hand, or directly by the authoring agent, and published. After that, any questionnaire — including the meta-questionnaire itself — can be edited through Qava. This is a standard compiler bootstrap and terminates cleanly: editing the meta-questionnaire simply produces its next version.
+
+### Escape Hatch
+
+Guided Q&A is the default authoring experience, ideal for first-time and structured authoring. For bulk edits, authors may submit or edit the raw questionnaire JSON directly. The raw path passes the same publication gate, so both routes converge on identical validation.
+
+Cross-document references, such as a condition naming another question, are validated at the publication gate rather than per keystroke, and appear as health attention items during authoring.
+
+---
+
+## Session View and Client Contract
+
+The backend returns one renderable view after reads and mutations:
 
 ```json
 {
   "session": {
     "id": "session-123",
-    "revision": 19,
-    "lifecycle_status": "active",
-    "completion_status": "in_progress",
-    "active_topic_id": "budget"
+    "revision": 7,
+    "status": "active",
+    "questionnaire_id": "customer-preferences",
+    "questionnaire_version": 1
   },
-  "topics": [
-    {
-      "id": "budget",
-      "title": "Budget & Delivery",
-      "status": "in_progress",
-      "answered_required": 3,
-      "applicable_required": 6
-    },
-    {
-      "id": "rooms",
-      "title": "Rooms & Spaces",
-      "status": "complete",
-      "answered_required": 7,
-      "applicable_required": 7
-    }
-  ],
+  "progress": {
+    "satisfied_required": 8,
+    "total_required": 10
+  },
   "current_interaction": {
-    "id": "budget-contingency",
-    "kind": "defined_question",
-    "topic_id": "budget",
-    "prompt": "How much contingency are you planning?",
-    "component": "money",
+    "id": "favourite-colour-question",
+    "kind": "question",
+    "prompt": "What is your favourite colour?",
     "required": true,
-    "props": {}
-  }
+    "answer_schema": {
+      "type": "string",
+      "enum": ["red", "green", "blue"]
+    },
+    "component": {
+      "name": "radio_group",
+      "props": {
+        "choices": [
+          { "value": "red", "label": "Red" },
+          { "value": "green", "label": "Green" },
+          { "value": "blue", "label": "Blue" }
+        ]
+      }
+    }
+  },
+  "result": {
+    "status": "in_progress",
+    "data": {},
+    "health": {
+      "score": 74,
+      "readiness": "not_ready"
+    }
+  },
+  "actions": ["answer", "skip", "save_and_exit"]
 }
 ```
 
-The client should not need separate progress and next-question endpoints after every answer.
+The client is responsible for:
+
+- rendering the returned semantic component;
+- collecting a value;
+- submitting user actions;
+- displaying progress, result preview, health, and errors;
+- applying its own visual design system.
+
+The client is not responsible for:
+
+- choosing questionnaire-specific controls;
+- deciding answer types;
+- mapping values into outputs;
+- choosing the next question;
+- determining requirement satisfaction;
+- calculating health;
+- deciding publication readiness.
+
+Unsupported components must fail explicitly or use a declared compatible fallback. They must not degrade typed values into arbitrary strings.
 
 ---
 
-## Runtime API
+## Runtime Operations
 
-The MVP client requires four operations.
+The conceptual MVP API needs six operations.
 
-### Start a Session
+### Create a Session
 
 ```http
 POST /sessions
 ```
 
-```json
-{
-  "definition_id": "custom-home-intake",
-  "definition_version": 1
-}
-```
-
-Returns a complete session view containing the topic menu and initial interaction.
-
-Creating a session selects the first incomplete topic by definition order. The user may immediately select a different topic.
+Creates a session against an exact published questionnaire version and returns its initial view.
 
 ### Read or Resume a Session
 
@@ -634,24 +808,9 @@ Creating a session selects the first incomplete topic by definition order. The u
 GET /sessions/{session_id}
 ```
 
-Returns the latest session view. Resume is derived from the stored active topic, current answers, and clarification state.
+Returns the latest complete view, including current draft and health.
 
-### Select a Topic
-
-```http
-POST /sessions/{session_id}/navigation
-```
-
-```json
-{
-  "expected_revision": 18,
-  "topic_id": "rooms"
-}
-```
-
-The backend selects the actual next interaction in that topic.
-
-### Submit an Answer or Clarification
+### Submit an Answer
 
 ```http
 POST /sessions/{session_id}/answers
@@ -659,315 +818,261 @@ POST /sessions/{session_id}/answers
 
 ```json
 {
-  "interaction_id": "budget-target-range",
-  "expected_revision": 18,
-  "value": {
-    "minimum": 700000,
-    "maximum": 900000,
-    "currency": "CAD"
-  }
+  "interaction_id": "favourite-colour-question",
+  "expected_revision": 7,
+  "value": "green"
 }
 ```
 
-A successful mutation returns the complete updated session view. A stale `expected_revision` returns a conflict instead of overwriting newer state.
+The server validates the value, stores the accepted answer, recalculates the result and health, selects the next interaction, increments the revision, and returns the complete updated view.
 
-A clarification may be skipped explicitly:
+Skipping is allowed only when the published question policy permits it. A skip records that the user declined or could not answer; it does not satisfy a required requirement, normally lowers completeness, and remains revisitable. Required unanswered data may therefore prevent readiness even when its question was skipped.
+
+### Navigate
+
+```http
+POST /sessions/{session_id}/navigation
+```
+
+Allows the user to visit a declared section or unresolved requirement without embedding routing logic in the client.
+
+### Request Result
+
+```http
+GET /sessions/{session_id}/result
+```
+
+Returns the canonical projection, health, attention items, and provenance for the current or requested revision.
+
+### Publish Result
+
+```http
+POST /sessions/{session_id}/publications
+```
 
 ```json
 {
-  "interaction_id": "clarification-456",
-  "expected_revision": 19,
-  "action": "skip"
+  "expected_revision": 12,
+  "adapter": "json-document"
 }
 ```
 
----
+Publication succeeds only if the configured gate passes. It returns a durable publication receipt.
 
-## Revision and Concurrency
-
-The session revision protects against stale clients, multiple browser tabs, and overlapping requests.
-
-The revision increments on every accepted authoritative session mutation, including:
-
-- answering a defined question;
-- answering or skipping a clarification;
-- resolving deterministic validation;
-- changing the active topic;
-- submitting or archiving a session, if supported.
-
-A revision mismatch should return `409 Conflict` with the current revision and session view.
-
-For the MVP, `active_topic_id` is shared authoritative session state, so navigation increments the revision. This assumes one active user experience per session. A later collaborative version could move topic selection into client-local state.
+Optimistic concurrency prevents a stale client from overwriting a newer session revision.
 
 ---
 
-## Persistence Model
+## Persistence and Audit
 
-A practical first implementation needs three logical stores. The exact database schema can emerge during implementation.
+A practical implementation uses four logical stores:
 
-### Definitions
+### Published Questionnaires
 
-Immutable published definition documents keyed by `id` and `version`.
+Immutable compiled documents keyed by ID and version.
 
 ### Sessions
 
-Current authoritative session snapshots containing:
-
-- definition identity;
-- latest answers by question ID;
-- active topic;
-- clarification state;
-- revision;
-- lifecycle status.
+Current authoritative state with latest answers, generated interactions, revision, lifecycle status, and navigation context.
 
 ### Interactions
 
-Append-only records of accepted user actions and generated prompts, including displayed questions, answer changes, clarification answers, clarification skips, navigation changes, validation displays, and validation resolutions.
+Append-only records of questions shown, answers submitted, clarifications, reviews, skips, and navigation actions.
 
-This is intentionally not full event sourcing. `sessions` stores the current authoritative snapshot. `interactions` stores the audit and explanation trail. Progress, completion, validation issues, and result projections are calculated from the session and published definition.
+### Publications
 
----
+Immutable attempts and receipts for external side effects.
 
-## Result Projection
+This is not full event sourcing. The session snapshot is authoritative for current state; interactions explain how it was reached.
 
-The result is not the session record and is not merely a transcript. It is generated from the published definition version, applicable session answers, and selected clarification context.
-
-A result projection may be generated at any revision. Its status reflects whether deterministic completion has been reached. `final` refers to the projection at a complete or submitted state, not to a separate storage mechanism.
-
-For each applicable answered question:
-
-1. locate the answer by question ID;
-2. read the question's declared output path;
-3. validate the value against the question contract;
-4. write the value into the projected result;
-5. ignore stored answers for currently inapplicable questions.
-
-```json
-{
-  "session_id": "session-123",
-  "definition": {
-    "id": "custom-home-intake",
-    "version": 1
-  },
-  "revision": 42,
-  "status": "complete",
-  "data": {
-    "budget": {
-      "target_range": {
-        "minimum": 700000,
-        "maximum": 900000,
-        "currency": "CAD"
-      }
-    }
-  },
-  "clarifications": {
-    "design-priorities": [
-      {
-        "prompt": "If a trade-off becomes necessary, which priority should be protected first?",
-        "answer": "Natural light, even if some rooms become smaller."
-      }
-    ]
-  },
-  "interaction_summary": {
-    "defined_answers": 47,
-    "clarifications_answered": 4,
-    "clarifications_skipped": 2
-  }
-}
-```
-
-Output path uniqueness should be validated when a definition is published, not discovered during result generation.
+Health is normally derived from the questionnaire and current session revision rather than stored separately. Generated prompts, agent recommendations, extraction proposals, model identity, policy version, and supporting evidence are retained when needed for audit. Private reasoning is not required or stored.
 
 ---
 
-## Client Contract
+## Safety and Trust Boundaries
 
-The client renders a session view. It does not contain interview business logic.
+AI output is always treated as untrusted structured input.
 
-```ts
-interface SessionView {
-  session: {
-    id: string
-    revision: number
-    lifecycleStatus: "active" | "submitted" | "archived"
-    completionStatus: "in_progress" | "complete"
-    activeTopicId?: string
-  }
-  topics: TopicView[]
-  currentInteraction?: InteractionView
-}
+The server must:
 
-interface TopicView {
-  id: string
-  title: string
-  description?: string
-  status: "not_started" | "in_progress" | "complete"
-  answeredRequired: number
-  applicableRequired: number
-}
+- validate agent responses against schemas;
+- enforce requirement and mapping IDs itself;
+- enforce component compatibility itself;
+- validate every accepted answer;
+- enforce generation and clarification limits;
+- distinguish user answers from inferred values;
+- require confirmation for agent extraction when policy demands it;
+- continue deterministically when AI fails;
+- prevent agent access to undeclared tools and destinations;
+- prevent publication without an explicit authorized action.
 
-interface InteractionView {
-  id: string
-  kind: "defined_question" | "clarification" | "validation"
-  topicId: string
-  prompt: string
-  helpText?: string
-  component: QuestionComponentName
-  required: boolean
-  value?: unknown
-  props?: Record<string, unknown>
-}
-
-interface InteractionSubmission {
-  interactionId: string
-  expectedRevision: number
-  value?: unknown
-  action?: "skip"
-}
-```
-
-The client may render topics, render the declared component, collect a value, submit answers or navigation actions, and display progress and conflict messages returned by the backend.
-
-The client may not determine question applicability, question order, topic completion, session completion, clarification eligibility, or output projection.
-
-The component catalog is the source of component contracts: supported component names, accepted props, and answer shape. The question schema should define the generic question structure. The publisher performs cross-document validation so component constraints are not maintained in two places.
+Agent failures should reduce adaptability, not corrupt output or halt an otherwise answerable questionnaire.
 
 ---
 
-## Sample Domain: Custom Home Intake
+## MVP Scope
 
-The sample definition should be meaningful but bounded.
+The MVP should prove the complete product loop with the smallest coherent implementation.
 
-| Topic | Representative information |
-|---|---|
-| Project | Build type, current stage, intended use, delivery approach |
-| Land & Site | Ownership, location, constraints, search priorities |
-| Household & Lifestyle | Occupants, accessibility, routines, entertaining |
-| Home Structure | Home type, target area, storeys, basement, circulation |
-| Rooms & Spaces | Programme, room counts, priorities, special requirements |
-| Style & Character | Architectural direction, materials, atmosphere, inspiration |
-| Exterior & Outdoor Living | Garage, landscaping, entertaining, seasonality |
-| Budget & Delivery | Budget range, scope, contingency, schedule, trade-offs |
+### Included
 
-A suitable first definition is approximately:
+- JSON Schema as the output contract;
+- output-contract-first questionnaire authoring;
+- deterministic authoring scaffolding plus bounded agent proposals for questions and presentation metadata;
+- author confirmation for ambiguous UI choices;
+- immutable published questionnaire versions;
+- typed questions and stable answer values;
+- one built-in web component catalog and generic renderer;
+- a collection (`repeating_group`) component and dynamic option sources;
+- deterministic component inference with optional agent recommendation;
+- bounded runtime question selection and clarification;
+- self-hosted authoring: a meta-questionnaire plus a questionnaire registry adapter;
+- deterministic fallback ordering;
+- session persistence, resume, and answer editing;
+- continuous canonical JSON result projection;
+- explainable health dimensions and a headline score;
+- optimistic concurrency;
+- interaction and publication audit records;
+- explicit publication through a JSON document adapter.
 
-- 8 topics;
-- 40 to 55 defined questions;
-- 5 to 8 questions per topic;
-- no more than one clarification per eligible question;
-- approximately 10 core UI components.
+### Excluded
 
-Nothing in the runtime should be named `BudgetQuestion`, `GarageQuestion`, or `ArchitecturalStyleQuestion`. To the engine, these are only definitions, topics, questions, conditions, components, answers, interactions, and paths.
-
----
-
-## Future Analysis Capabilities
-
-Analysis is intentionally outside the MVP runtime. When introduced, analyses should be stored separately from the authoritative session snapshot and tied to a specific session revision.
-
-An analysis record should include:
-
-- session ID;
-- session revision;
-- analysis type;
-- result payload;
-- creation timestamp.
-
-Potential future capabilities include:
-
-- deterministic answer-quality warnings;
-- topic summaries;
-- contradiction detection;
-- trade-off identification;
-- cross-topic insights;
-- evidence-backed analysis;
-- confidence metadata.
-
-These should not affect deterministic interview completion. Avoid numerical health scores until real usage demonstrates that the scoring model is useful and explainable. Prefer explicit attention signals first.
+- general workflow or graph execution;
+- unrestricted autonomous agents;
+- arbitrary code generation or execution;
+- runtime mutation of published contracts;
+- a drag-and-drop form designer;
+- collaborative multi-user editing;
+- automatic migration between questionnaire versions;
+- continuous database writes or message publication after every answer;
+- many destination adapters before the JSON path is proven;
+- UI components unconstrained by typed answer contracts.
 
 ---
 
 ## Delivery Plan
 
-### Phase 1: Deterministic Interview
+The first three phases together form the complete MVP. They are implementation slices, not separate product editions; each keeps the question-to-answer-to-output loop working end to end.
 
-Build definition assembly, validation, topic navigation, conditional questions, session answers, progress calculation, deterministic completion, interaction history, optimistic concurrency, result projection, and a generic component renderer.
+### Phase 1: Contract to Working Questionnaire
 
-Success: a user can complete the custom-home interview without AI.
+Implement:
 
-### Phase 1.5: Bounded Clarification
+- JSON output contracts;
+- requirements, questions, and direct mappings;
+- deterministic UI inference;
+- collection component and dynamic option sources;
+- draft authoring decisions, confirmation, and override;
+- questionnaire publication;
+- generic component rendering;
+- sessions and typed answers;
+- continuous JSON projection.
 
-Add clarification eligibility, one structured AI assessment, one optional `short_text` follow-up, skip support, strict timeout and schema validation, and fail-open continuation to the deterministic queue.
+Success means an author can provide a contract, publish a questionnaire, answer it through generated UI, and see the JSON result update after every answer.
 
-Success: one vague, high-value answer can produce one useful clarification without changing completion behavior.
+### Phase 2: Bounded Agent
 
-### Phase 2: Deterministic Quality Signals
+Add:
 
-Add explicit warnings and validations based on rules.
+- authoring-agent proposals;
+- adaptive next-question ranking;
+- bounded clarifications;
+- structured extraction proposals;
+- deterministic fallback and agent audit metadata.
 
-Success: the UI can identify concrete issues without pretending that answer quality is precisely measurable.
+Success means AI improves authoring and interview quality without controlling schemas, accepted values, or publication.
 
-### Phase 3: Analysis
+### Phase 3: Health and Publication
 
-Add topic and cross-topic analysis tied to a session revision and grounded in interaction evidence.
+Add:
 
-Success: downstream users receive explainable observations without altering the authoritative interview state.
+- completeness, validity, confidence, consistency, and specificity;
+- explainable attention items;
+- configurable readiness gates;
+- explicit JSON publication and receipts;
+- the questionnaire registry adapter and a bootstrapped meta-questionnaire, so Qava authors Qava.
+
+Success means every revision has an understandable fitness assessment, a ready revision can be published safely, and the builder itself runs on the engine.
+
+### Phase 4: Adapter and Renderer Ecosystem
+
+Add adapters and renderers only after the core loop is proven:
+
+- document databases;
+- relational mappings;
+- CSV and Excel;
+- message buses;
+- HTTP destinations;
+- alternate UI platforms.
 
 ---
 
 ## MVP Acceptance Criteria
 
-The MVP is complete when a user can:
+The MVP is successful when:
 
-- start a session against an immutable published definition version;
-- see all available topics before answering;
-- create a session, resume it, or choose a topic;
-- answer deterministic and conditional questions;
-- cause conditional questions to become applicable or inapplicable;
-- move between topics without losing answers;
-- see deterministic topic progress;
-- receive no more than one optional clarification on an eligible answer;
-- answer or skip the clarification;
-- return automatically to the predefined path;
-- complete a topic only through deterministic rules;
-- derive session completion only when all applicable required questions are answered and blocking validation issues are resolved;
-- retrieve a structured result projected from applicable answers;
-- receive a conflict instead of overwriting a newer session revision;
-- inspect the interaction history used to produce the result.
-
-The product thesis is proven when this works without introducing a workflow language, graph runtime, unrestricted AI agent, fact service, domain-specific engine classes, or AI-controlled completion.
+- an author can supply a JSON output contract;
+- the system can propose the questions needed to satisfy it;
+- every question has a typed answer schema and valid output mapping;
+- the system can infer a compatible UI component from metadata;
+- ambiguous component choices can be confirmed or overridden during authoring;
+- a published questionnaire is immutable and versioned;
+- a generic client can render the questionnaire without domain-specific UI code;
+- enum labels are displayed while stable enum IDs are stored;
+- the runtime can select the next useful eligible question;
+- AI failure falls back to deterministic execution;
+- every accepted answer updates a canonical JSON result;
+- a partial result is available at any session revision;
+- result health includes dimensions, a headline score, and explainable attention items;
+- users can edit answers and see dependent result and health changes;
+- stale writes are rejected;
+- external publication occurs only through an explicit action;
+- publication validates the exact revision and returns a receipt;
+- interactions and result provenance explain how output values were produced.
 
 ---
 
 ## Architectural Summary
 
 ```text
-Definition source files
-        -> compile and validate
-Immutable published definition
-        ->
-Session state
-  - Latest answers by question ID
-  - Active topic
-  - Clarification state
-  - Revision
-  - Lifecycle status
-        ->
-Deterministic interview engine
-        ->
-Session view
-  - Topic menu
-  - Progress
-  - Current interaction
-  - Derived completion state
+AUTHORING
 
-Optional AI clarifier
-  - One skippable follow-up attached to a parent question
-  - Answered/skipped state remembered by parent question
+Output contract
+    -> requirement discovery
+    -> question and mapping proposal
+    -> automatic UI component resolution
+    -> author confirmation where ambiguous
+    -> immutable published questionnaire
 
-Result projector
-  - Applicable answers written to declared output paths
-  - Available at any session revision
+
+RUNTIME
+
+Published questionnaire
++ session answers
+    -> deterministic eligibility and validation
+    -> bounded agent ranking and clarification
+    -> next renderable question
+    -> typed answer
+    -> canonical result projection
+    -> explainable health
+
+
+DELIVERY
+
+Canonical result at a selected revision
+    -> explicit publication gate
+    -> output adapter
+    -> JSON / database / CSV / Excel / message / API
 ```
 
-Qava is a deterministic interview engine with an optional clarification step. That is the product to prove first.
+Qava is an output-driven Q&A system.
+
+It asks for the information a declared output needs, presents the right UI to capture each answer, continuously builds and evaluates the result, and publishes that result through a destination adapter when explicitly requested.
+
+Simply put:
+
+```text
+A question goes out.
+An answer comes in.
+A specific output is produced.
+```

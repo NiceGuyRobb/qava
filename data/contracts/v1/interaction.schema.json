@@ -1,14 +1,31 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://qava.dev/contracts/v1/interaction.schema.json",
-  "title": "Question and answer interaction",
+  "title": "Qava interaction record",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "session_id", "session_revision", "topic_id", "question", "status", "created_at"],
+  "required": ["id", "session_id", "session_revision", "kind", "actor_id", "created_at"],
   "properties": {
-    "id": { "type": "string" }, "session_id": { "type": "string" }, "session_revision": { "type": "integer" },
-    "topic_id": { "type": "string" }, "question": { "$ref": "question.schema.json" }, "answer": {},
-    "status": { "enum": ["pending", "answered", "skipped", "inactive"] },
-    "created_at": { "type": "string", "format": "date-time" }, "answered_at": { "type": ["string", "null"], "format": "date-time" }
+    "id": { "type": "string" },
+    "session_id": { "type": "string" },
+    "session_revision": { "type": "integer", "minimum": 1 },
+    "kind": {
+      "enum": [
+        "question_shown",
+        "answer_accepted",
+        "answer_rejected",
+        "skip",
+        "clarification",
+        "confirmation",
+        "review",
+        "navigation",
+        "assistance_fallback"
+      ]
+    },
+    "interaction_snapshot": { "type": ["object", "null"] },
+    "submitted_value": {},
+    "actor_id": { "type": "string" },
+    "metadata": { "type": "object" },
+    "created_at": { "type": "string", "format": "date-time" }
   }
 }

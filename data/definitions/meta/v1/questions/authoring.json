@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "topic_id": "authoring",
+  "questions": [
+    {
+      "id": "questionnaire-id",
+      "type": "defined",
+      "topic_id": "authoring",
+      "path": "id",
+      "prompt": "What is the questionnaire identifier?",
+      "component": "short_text",
+      "required": true,
+      "answer_schema": {"type": "string"}
+    },
+    {
+      "id": "questionnaire-title",
+      "type": "defined",
+      "topic_id": "authoring",
+      "path": "title",
+      "prompt": "What is the questionnaire title?",
+      "component": "short_text",
+      "required": true,
+      "answer_schema": {"type": "string"}
+    },
+    {
+      "id": "output-contract",
+      "type": "defined",
+      "topic_id": "authoring",
+      "path": "output_contract",
+      "prompt": "Define the output contract.",
+      "component": "structured_form",
+      "required": true,
+      "answer_schema": {"type": "object"}
+    },
+    {
+      "id": "question-list",
+      "type": "defined",
+      "topic_id": "authoring",
+      "path": "questions",
+      "prompt": "Define the questionnaire questions.",
+      "component": "repeatable_group",
+      "required": true,
+      "answer_schema": {"type": "array", "items": {"type": "object"}}
+    },
+    {
+      "id": "authoring-decisions",
+      "type": "defined",
+      "topic_id": "authoring",
+      "path": "decisions",
+      "prompt": "Record any authoring decisions.",
+      "component": "repeatable_group",
+      "required": false,
+      "answer_schema": {"type": "array", "items": {"type": "object"}}
+    }
+  ]
+}

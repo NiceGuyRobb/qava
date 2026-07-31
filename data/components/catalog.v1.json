@@ -153,6 +153,33 @@
         "type": "object"
       },
       "ai_allowed": false
+    },
+    {
+      "name": "money_input",
+      "answer_shape": "money",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": true
+    },
+    {
+      "name": "date_picker",
+      "answer_shape": "date",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": true
+    },
+    {
+      "name": "datetime_picker",
+      "answer_shape": "datetime",
+      "renderer_owned_by": "client",
+      "props_schema": {
+        "type": "object"
+      },
+      "ai_allowed": true
     }
   ]
 }

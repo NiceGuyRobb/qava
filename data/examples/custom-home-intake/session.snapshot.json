@@ -1,7 +1,7 @@
 {
   "id": "session-123",
-  "definition_id": "custom-home-intake",
-  "definition_version": 1,
+  "questionnaire_id": "custom-home-intake",
+  "questionnaire_version": 1,
   "revision": 18,
   "status": "active",
   "active_topic_id": "budget",
@@ -17,10 +17,10 @@
       "applicable_question_ids": ["budget-range", "budget-scope", "funding", "contingency", "timeline"],
       "pending_clarification_ids": [],
       "progress": 40,
-      "health": { "completeness": 40, "clarity": 88, "consistency": 92, "confidence": 82, "specificity": 76, "overall": 69, "calculation_version": 1 }
+      "health": { "completeness": 40, "validity": 88, "consistency": 92, "confidence": 82, "specificity": 76, "overall": 69, "readiness": "needs_attention", "calculation_version": 1 }
     }
   },
-  "health": { "completeness": 38, "clarity": 84, "consistency": 90, "confidence": 80, "specificity": 72, "overall": 65, "calculation_version": 1 },
+  "health": { "completeness": 38, "validity": 84, "consistency": 90, "confidence": 80, "specificity": 72, "overall": 65, "readiness": "needs_attention", "calculation_version": 1 },
   "insights": [],
   "created_at": "2026-07-22T20:00:00Z",
   "updated_at": "2026-07-22T20:16:12Z"
