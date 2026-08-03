@@ -59,6 +59,127 @@ This is the product. Topic navigation, persistence, audit history, concurrency, 
 
 ---
 
+## Run Locally
+
+**Prerequisites:** Python 3.12, [uv](https://docs.astral.sh/uv/), and Node.js with npm.
+
+Install the backend and frontend dependencies from the repository root:
+
+```powershell
+uv sync --project backend
+npm --prefix frontend install
+```
+
+Start the API in one terminal:
+
+```powershell
+uv run --project backend uvicorn qava.main:app --host 127.0.0.1 --port 8000
+```
+
+Start the Vue client in another:
+
+```powershell
+npm --prefix frontend run dev
+```
+
+The API is available at `http://127.0.0.1:8000`, with OpenAPI at `/openapi.json`. The client is
+available at `http://127.0.0.1:5173`; open a real interview route such as
+`/sessions/{sessionId}`, not the placeholder `/sessions` route.
+
+For a guided local session, follow [the manual smoke test](docs/manual-smoke-test.md). To
+republish the checked-in custom-home definition and receive a fresh session URL, run
+[publish-new-questionnaire-version.ps1](docs/publish-new-questionnaire-version.ps1) after the
+backend has started. Published versions and their sessions are immutable, so an existing session
+does not acquire newly published definition changes.
+
+## Validate Changes
+
+Run focused checks while working, then choose the broader check that matches the affected surface:
+
+```powershell
+# Backend tests
+uv run --project backend pytest
+
+# Frontend type check and component tests
+npm --prefix frontend run typecheck
+npm --prefix frontend test -- SemanticRenderer.spec.ts
+
+# Compile, publish, and render the checked-in definition pack in Playwright
+npm --prefix frontend run test:e2e:pack
+```
+
+The definition-pack browser smoke test covers both conditional paths in the custom-home pack and
+runs desktop, mobile, and reduced-motion Chromium projects. It is the quickest end-to-end guard
+against a definition, compiler, or generic renderer producing an unsupported answer control.
+
+---
+
+## How Qava Works
+
+```mermaid
+flowchart LR
+    accTitle: Qava architecture and usage flow
+    accDescr {
+      Qava moves from an output contract through authoring and an adaptive interview
+      to an explicitly authorized publication, with deterministic correctness and
+      optional bounded AI assistance.
+    }
+
+    subgraph Authoring["1. Authoring: reviewed, versioned input"]
+      Contract[Declared output contract] --> Compile[Compile requirements, questions, and mappings]
+      Compile --> Review[Author reviews decisions]
+      Review --> Questionnaire[Published questionnaire<br/>immutable version]
+    end
+
+    subgraph Interview["2. Interview: deterministic runtime loop"]
+      Render[Client renders declared component] --> Answer[Respondent submits typed answer]
+      Answer --> Engine[Deterministic runtime<br/>validate, map, and recalculate]
+      Engine --> Draft[Canonical result draft<br/>health and attention items]
+      Draft --> Next[Next eligible interaction]
+      Next --> Render
+    end
+
+    Questionnaire --> Render
+
+    subgraph Delivery["3. Delivery: explicit external side effect"]
+      Draft -->|ready revision| Authorize[User explicitly authorizes publication]
+      Authorize --> Gate{Publication gate passes?}
+      Gate -->|yes| Adapter[Output adapter]
+      Adapter --> Destination[Destination artifact]
+      Adapter --> Receipt[Durable receipt]
+    end
+
+    Agent[Optional bounded agent<br/>policy-constrained] -. proposals .-> Compile
+    Agent -. rank or clarify .-> Next
+    Fallback[Deterministic eligibility<br/>and ordering fallback] --> Next
+
+    subgraph Audit["Persistence and audit"]
+      Published[Published questionnaires<br/>immutable versions]
+      Sessions[Session snapshots<br/>and revisions]
+      Interactions[Append-only interactions]
+      Publications[Publication attempts<br/>and receipts]
+    end
+
+    Questionnaire --> Published
+    Answer --> Sessions
+    Engine --> Interactions
+    Receipt --> Publications
+```
+
+  **Diagram key:** Solid arrows are required or deterministic product flow. Dashed arrows are optional, policy-constrained assistance. The MVP's canonical result is typed JSON; an output adapter translates a ready revision only after explicit authorization.
+
+  Read the detailed model in [authoring and compilation](#1-authoring-and-compilation), the [runtime interview](#2-runtime-interview), [continuous result projection](#continuous-result-projection), [result health](#result-health), [output adapters and publication](#output-adapters-and-publication), [persistence and audit](#persistence-and-audit), and [safety and trust boundaries](#safety-and-trust-boundaries).
+
+  Without diagram rendering:
+
+  1. An author starts with a declared output contract. Qava compiles reviewable requirements, questions, mappings, component choices, health rules, and agent policy; the author publishes an immutable questionnaire version.
+  2. A respondent starts a session against that version. The client renders the declared component, and the deterministic runtime validates each typed answer, applies declared mappings, and recalculates the draft, health, attention items, and next eligible interaction.
+  3. A bounded agent may propose authoring decisions or rank and clarify within policy. Deterministic eligibility and ordering keep the interview operable when assistance is unavailable or invalid.
+  4. The draft is inspectable after every accepted answer and does not write externally. Session snapshots, interaction history, and generated-interaction evidence support resume and audit.
+  5. A user explicitly authorizes publication of a ready revision. The publication gate validates that revision, an adapter delivers it to a destination, and Qava records the attempt and receipt.
+
+---
+
 ## Design Goals
 
 ### 1. Output first
@@ -787,6 +908,16 @@ The client is not responsible for:
 - deciding publication readiness.
 
 Unsupported components must fail explicitly or use a declared compatible fallback. They must not degrade typed values into arbitrary strings.
+
+## Definition-Pack Browser Smoke Test
+
+Run the following from `frontend/` to compile the checked-in custom-home definition pack with the production compiler, publish it through the normal API, and render every interaction in two conditional scenarios:
+
+```powershell
+npm run test:e2e:pack
+```
+
+The test runs against desktop, mobile, and reduced-motion Chromium projects. It supplies schema-valid sample answers through the session API so it can cover the full generated interview quickly, while failing on browser errors or an unsupported answer component. Use it after changing definition files, the pack compiler, or a renderer instead of manually republishing and stepping through the entire questionnaire.
 
 ---
 

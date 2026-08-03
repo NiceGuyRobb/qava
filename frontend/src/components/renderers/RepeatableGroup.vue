@@ -48,6 +48,8 @@ function defaultItem(fields: readonly FieldDescriptor[]): RepeatableItem {
   return Object.fromEntries(
     fields.map((field) => {
       if (field.type === 'boolean') return [field.key, false]
+      if (field.type === 'multi_select') return [field.key, []]
+      if (field.type === 'measurement') return [field.key, { value: null, unit: null }]
       if (field.type === 'group') return [field.key, defaultItem(field.fields ?? [])]
       if (field.type === 'collection') return [field.key, []]
       return [field.key, null]
@@ -101,7 +103,7 @@ function isRepeatableItem(value: unknown): value is RepeatableItem {
   <fieldset class="repeatable-group" :disabled="disabled">
     <legend class="repeatable-group__legend">{{ legend }}</legend>
     <div v-if="usesRawJson" class="repeatable-group__json">
-      <label class="repeatable-group__label" :for="rawInputId">JSON array of objects</label>
+      <label class="repeatable-group__label" :for="rawInputId">Advanced JSON array input</label>
       <textarea
         :id="rawInputId"
         class="repeatable-group__control repeatable-group__control--json"

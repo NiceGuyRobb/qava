@@ -21,6 +21,58 @@ def test_validate_answer_enforces_json_schema_and_choice_ids() -> None:
     assert "choice_id" in issues[0]
 
 
+def test_declared_programme_answer_rejects_duplicate_or_undeclared_values() -> None:
+    question = {
+        "answer_schema": {
+            "type": "object",
+            "required": ["selections"],
+            "properties": {
+                "selections": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["item_id", "status"],
+                        "properties": {
+                            "item_id": {"type": "string", "enum": ["item-a", "item-b"]},
+                            "status": {"type": "string", "enum": ["required", "possible"]},
+                            "details": {
+                                "type": "object",
+                                "properties": {
+                                    "size": {"type": "string", "enum": ["compact", "generous"]},
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    }
+
+    assert validate_answer(
+        question,
+        {"selections": [{"item_id": "item-a", "status": "required"}]},
+    ) == []
+    assert validate_answer(
+        question,
+        {
+            "selections": [
+                {"item_id": "item-a", "status": "required"},
+                {"item_id": "item-a", "status": "possible", "details": {"size": "generous"}},
+            ]
+        },
+    ) == ["selections contains duplicate item_id values: ['item-a']"]
+
+    undeclared_issues = validate_answer(
+        question,
+        {
+            "selections": [
+                {"item_id": "item-c", "status": "unknown", "details": {"size": "extra_large"}}
+            ]
+        },
+    )
+    assert len(undeclared_issues) == 3
+
+
 def test_evaluate_condition_supports_equals_contains_exists() -> None:
     answers = {
         "q-style": "modern",

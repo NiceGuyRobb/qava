@@ -1,47 +1,10 @@
 <script setup lang="ts">
 import { computed, shallowRef, useId, watch } from 'vue'
 
+import NestedFieldList, { type FieldDescriptor } from './NestedFieldList.vue'
+
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue }
-type FieldValue = string | number | boolean | null
 type StructuredValue = Record<string, JsonValue>
-
-interface SelectOption {
-  label: string
-  value: string | number | boolean
-}
-
-interface BaseFieldDescriptor {
-  key: string
-  label: string
-  required?: boolean
-}
-
-interface StringFieldDescriptor extends BaseFieldDescriptor {
-  type: 'string'
-  placeholder?: string
-}
-
-interface NumberFieldDescriptor extends BaseFieldDescriptor {
-  type: 'number'
-  min?: number
-  max?: number
-  step?: number
-}
-
-interface BooleanFieldDescriptor extends BaseFieldDescriptor {
-  type: 'boolean'
-}
-
-interface SelectFieldDescriptor extends BaseFieldDescriptor {
-  type: 'select'
-  options: readonly SelectOption[]
-}
-
-type FieldDescriptor =
-  | StringFieldDescriptor
-  | NumberFieldDescriptor
-  | BooleanFieldDescriptor
-  | SelectFieldDescriptor
 
 interface Props {
   modelValue: StructuredValue
@@ -74,32 +37,6 @@ watch(
   },
 )
 
-function emitField(key: string, value: FieldValue) {
-  emit('update:modelValue', { ...props.modelValue, [key]: value })
-}
-
-function updateString(key: string, event: unknown) {
-  const input = (event as { currentTarget: { value: string } }).currentTarget
-  emitField(key, input.value)
-}
-
-function updateNumber(key: string, event: unknown) {
-  const input = (event as { currentTarget: { value: string; valueAsNumber: number } }).currentTarget
-  const value = input.value === '' ? null : input.valueAsNumber
-  emitField(key, value === null || Number.isFinite(value) ? value : null)
-}
-
-function updateBoolean(key: string, event: unknown) {
-  const input = (event as { currentTarget: { checked: boolean } }).currentTarget
-  emitField(key, input.checked)
-}
-
-function updateSelect(field: SelectFieldDescriptor, event: unknown) {
-  const select = (event as { currentTarget: { value: string } }).currentTarget
-  const index = Number(select.value)
-  emitField(field.key, field.options[index]?.value ?? null)
-}
-
 function updateRawJson(event: unknown) {
   const input = (event as { currentTarget: { value: string } }).currentTarget
   rawJson.value = input.value
@@ -116,12 +53,6 @@ function updateRawJson(event: unknown) {
   }
 }
 
-function selectedOptionIndex(field: SelectFieldDescriptor) {
-  const value = props.modelValue[field.key]
-  const index = field.options.findIndex((option) => Object.is(option.value, value))
-  return index < 0 ? '' : String(index)
-}
-
 function isStructuredValue(value: unknown): value is StructuredValue {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -131,7 +62,7 @@ function isStructuredValue(value: unknown): value is StructuredValue {
   <fieldset class="structured-form" :disabled="disabled">
     <legend class="structured-form__legend">{{ legend }}</legend>
     <div v-if="usesRawJson" class="structured-form__json">
-      <label class="structured-form__label" :for="rawInputId">JSON object</label>
+      <label class="structured-form__label" :for="rawInputId">Advanced JSON object input</label>
       <textarea
         :id="rawInputId"
         class="structured-form__control structured-form__control--json"
@@ -147,51 +78,14 @@ function isStructuredValue(value: unknown): value is StructuredValue {
         {{ rawJsonError }}
       </p>
     </div>
-    <div v-else class="structured-form__grid">
-      <label v-for="field in fields" :key="field.key" class="structured-form__field">
-        <span class="structured-form__label">{{ field.label }}</span>
-        <input
-          v-if="field.type === 'string'"
-          class="structured-form__control"
-          type="text"
-          :value="modelValue[field.key] ?? ''"
-          :placeholder="field.placeholder"
-          :required="field.required"
-          @input="updateString(field.key, $event)"
-        />
-        <input
-          v-else-if="field.type === 'number'"
-          class="structured-form__control"
-          type="number"
-          :value="modelValue[field.key] ?? ''"
-          :min="field.min"
-          :max="field.max"
-          :step="field.step ?? 'any'"
-          :required="field.required"
-          @input="updateNumber(field.key, $event)"
-        />
-        <span v-else-if="field.type === 'boolean'" class="structured-form__check">
-          <input
-            type="checkbox"
-            :checked="modelValue[field.key] === true"
-            @change="updateBoolean(field.key, $event)"
-          />
-          <span>{{ modelValue[field.key] === true ? 'Yes' : 'No' }}</span>
-        </span>
-        <select
-          v-else
-          class="structured-form__control"
-          :value="selectedOptionIndex(field)"
-          :required="field.required"
-          @change="updateSelect(field, $event)"
-        >
-          <option value="" disabled>Select an option</option>
-          <option v-for="(option, index) in field.options" :key="index" :value="index">
-            {{ option.label }}
-          </option>
-        </select>
-      </label>
-    </div>
+    <NestedFieldList
+      v-else
+      class="structured-form__grid"
+      :model-value="modelValue"
+      :fields="fields"
+      :disabled="disabled"
+      @update:model-value="emit('update:modelValue', $event as StructuredValue)"
+    />
   </fieldset>
 </template>
 

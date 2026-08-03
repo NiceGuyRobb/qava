@@ -58,7 +58,7 @@ def _compile_question(
     component = _required_string(source, "component")
     raw_props = source.get("props")
     props = cast(dict[str, Any], raw_props) if isinstance(raw_props, dict) else {}
-    choices = _compile_choices(props)
+    choices = _compile_choices(props, component)
     question: dict[str, Any] = {
         "id": _required_string(source, "id"),
         "topic_id": _required_string(source, "topic_id"),
@@ -123,8 +123,13 @@ def _compile_condition(
     return primitive(operator, source.get("value"), has_value="value" in source)
 
 
-def _compile_choices(props: dict[str, Any]) -> list[dict[str, str]]:
-    options = props.get("options")
+def _compile_choices(props: dict[str, Any], component: str) -> list[dict[str, str]]:
+    if component == "ranking":
+        options = props.get("items")
+    elif component == "visual_cards":
+        options = props.get("cards")
+    else:
+        options = props.get("options")
     if not isinstance(options, list):
         return []
 

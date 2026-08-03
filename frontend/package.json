@@ -10,7 +10,8 @@
     "lint": "eslint . --max-warnings=0",
     "api:generate": "openapi-typescript ../openapi/qava.openapi.json -o src/api/generated/schema.ts",
     "test": "vitest run --passWithNoTests",
-    "test:e2e": "playwright test --config ../playwright.config.ts"
+    "test:e2e": "playwright test --config ../playwright.config.ts",
+    "test:e2e:pack": "playwright test --config ../playwright.config.ts definition-pack-smoke.spec.ts"
   },
   "dependencies": {
     "@lucide/vue": "1.27.0",

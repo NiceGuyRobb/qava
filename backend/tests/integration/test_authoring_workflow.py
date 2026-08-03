@@ -175,6 +175,67 @@ def _us4_question() -> dict:
     }
 
 
+def _structured_question(field_component: str) -> dict:
+    return {
+        "id": "q-structure",
+        "prompt": "Describe the structure.",
+        "output_need_ids": ["need:name"],
+        "answer_schema": {
+            "type": "object",
+            "properties": {"style": {"type": "string"}},
+        },
+        "mapping": {"mode": "direct", "target": "/name"},
+        "presentation": {
+            "name": "structured_form",
+            "version": 1,
+            "props": {
+                "fields": [
+                    {"key": "style", "label": "Style", "component": field_component}
+                ]
+            },
+        },
+        "required": True,
+        "order": 1,
+    }
+
+
+def _invalid_programme_question() -> dict:
+    return {
+        "id": "q-programme",
+        "prompt": "Declare items.",
+        "output_need_ids": ["need:name"],
+        "answer_schema": {
+            "type": "object",
+            "properties": {
+                "selections": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["item_id", "status"],
+                        "properties": {
+                            "item_id": {"type": "string", "enum": ["item-a"]},
+                            "status": {"type": "string", "enum": ["required"]},
+                        },
+                    },
+                }
+            },
+        },
+        "mapping": {"mode": "direct", "target": "/name"},
+        "presentation": {
+            "name": "declared_programme",
+            "version": 1,
+            "props": {
+                "groups": [
+                    {"id": "group-a", "label": "Group A", "items": [{"value": "item-a", "label": "Item A"}]}
+                ],
+                "statuses": [],
+            },
+        },
+        "required": True,
+        "order": 1,
+    }
+
+
 async def _create_us4_draft(client: AsyncClient, draft_id: str) -> None:
     response = await client.post(
         "/api/v1/questionnaire-drafts",
@@ -197,6 +258,144 @@ async def _create_us4_draft(client: AsyncClient, draft_id: str) -> None:
         headers={"X-Qava-Identity": BASE64URL_AUTHOR},
     )
     assert response.status_code == 200, response.text
+
+
+async def test_guided_update_surfaces_structured_component_issue_and_blocks_publish(
+    client: AsyncClient,
+) -> None:
+    draft_id = "guided-structured-component"
+    await _create_us4_draft(client, draft_id)
+
+    invalid = await client.patch(
+        f"/api/v1/questionnaire-drafts/{draft_id}",
+        json={
+            "operations": [
+                {"operation": "upsert_question", "question": _structured_question("ranking")}
+            ]
+        },
+        headers={"X-Qava-Identity": BASE64URL_AUTHOR},
+    )
+    assert invalid.status_code == 200, invalid.text
+    assert invalid.json()["validation_issues"] == [
+        {
+            "code": "unsupported_structured_field_component",
+            "message": "Structured field component 'ranking' is not supported.",
+            "pointer": "/questions/q-structure/presentation/props/fields/0",
+        }
+    ]
+
+    blocked = await client.post(
+        f"/api/v1/questionnaire-drafts/{draft_id}/publish",
+        headers={"X-Qava-Identity": BASE64URL_AUTHOR},
+    )
+    assert blocked.status_code == 422, blocked.text
+
+    corrected = await client.patch(
+        f"/api/v1/questionnaire-drafts/{draft_id}",
+        json={
+            "operations": [
+                {"operation": "upsert_question", "question": _structured_question("short_text")}
+            ]
+        },
+        headers={"X-Qava-Identity": BASE64URL_AUTHOR},
+    )
+    assert corrected.status_code == 200, corrected.text
+    assert corrected.json()["validation_issues"] == []
+
+    published = await client.post(
+        f"/api/v1/questionnaire-drafts/{draft_id}/publish",
+        headers={"X-Qava-Identity": BASE64URL_AUTHOR},
+    )
+    assert published.status_code == 201, published.text
+
+
+async def test_raw_draft_surfaces_structured_component_issue_and_blocks_publish(
+    client: AsyncClient,
+) -> None:
+    draft_id = "raw-structured-component"
+    await _create_us4_draft(client, draft_id)
+
+    invalid = await client.put(
+        f"/api/v1/questionnaire-drafts/{draft_id}/raw",
+        json={
+            "title": "Raw structured draft",
+            "output_contract": {
+                "type": "object",
+                "properties": {"name": {"type": "string"}},
+                "required": ["name"],
+            },
+            "questions": [_structured_question("ranking")],
+            "decisions": [],
+        },
+        headers={"X-Qava-Identity": BASE64URL_AUTHOR},
+    )
+    assert invalid.status_code == 200, invalid.text
+    assert invalid.json()["validation_issues"] == [
+        {
+            "code": "unsupported_structured_field_component",
+            "message": "Structured field component 'ranking' is not supported.",
+            "pointer": "/questions/q-structure/presentation/props/fields/0",
+        }
+    ]
+
+    blocked = await client.post(
+        f"/api/v1/questionnaire-drafts/{draft_id}/publish",
+        headers={"X-Qava-Identity": BASE64URL_AUTHOR},
+    )
+    assert blocked.status_code == 422, blocked.text
+
+    corrected = await client.put(
+        f"/api/v1/questionnaire-drafts/{draft_id}/raw",
+        json={
+            "title": "Raw structured draft",
+            "output_contract": {
+                "type": "object",
+                "properties": {"name": {"type": "string"}},
+                "required": ["name"],
+            },
+            "questions": [_structured_question("short_text")],
+            "decisions": [],
+        },
+        headers={"X-Qava-Identity": BASE64URL_AUTHOR},
+    )
+    assert corrected.status_code == 200, corrected.text
+    assert corrected.json()["validation_issues"] == []
+
+    published = await client.post(
+        f"/api/v1/questionnaire-drafts/{draft_id}/publish",
+        headers={"X-Qava-Identity": BASE64URL_AUTHOR},
+    )
+    assert published.status_code == 201, published.text
+
+
+async def test_guided_and_raw_programme_issues_block_publish(client: AsyncClient) -> None:
+    for draft_id, method in [("guided-programme", "patch"), ("raw-programme", "raw")]:
+        await _create_us4_draft(client, draft_id)
+        if method == "patch":
+            response = await client.patch(
+                f"/api/v1/questionnaire-drafts/{draft_id}",
+                json={"operations": [{"operation": "upsert_question", "question": _invalid_programme_question()}]},
+                headers={"X-Qava-Identity": BASE64URL_AUTHOR},
+            )
+        else:
+            response = await client.put(
+                f"/api/v1/questionnaire-drafts/{draft_id}/raw",
+                json={
+                    "title": "Invalid programme",
+                    "output_contract": {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]},
+                    "questions": [_invalid_programme_question()],
+                    "decisions": [],
+                },
+                headers={"X-Qava-Identity": BASE64URL_AUTHOR},
+            )
+
+        assert response.status_code == 200, response.text
+        assert response.json()["validation_issues"][0]["code"] == "missing_programme_statuses"
+        blocked = await client.post(
+            f"/api/v1/questionnaire-drafts/{draft_id}/publish",
+            headers={"X-Qava-Identity": BASE64URL_AUTHOR},
+        )
+        assert blocked.status_code == 422, blocked.text
 
 
 async def test_pending_decision_blocks_publish_then_confirm_allows_it(client: AsyncClient) -> None:

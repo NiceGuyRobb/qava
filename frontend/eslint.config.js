@@ -12,6 +12,9 @@ export default tseslint.config(
   ...pluginVue.configs['flat/essential'],
   {
     files: ['**/*.vue'],
+    rules: {
+      'no-undef': 'off',
+    },
     languageOptions: {
       parser: vueParser,
       parserOptions: {

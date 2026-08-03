@@ -31,9 +31,7 @@
         "enabled": true,
         "trigger": "after_submission",
         "maximum_followups": 1,
-        "goals": [
-          "Understand why the first-ranked space matters"
-        ]
+        "goals": ["Understand why the first-ranked space matters"]
       }
     },
     {
@@ -42,101 +40,55 @@
       "topic_id": "rooms",
       "path": "rooms.programme",
       "prompt": "Choose the rooms and spaces the home should include.",
-      "component": "room_programme",
+      "component": "declared_programme",
       "required": true,
       "props": {
         "statuses": [
-          "required",
-          "possible",
-          "not_needed"
+          {"value": "required", "label": "Required"},
+          {"value": "possible", "label": "Possible"},
+          {"value": "not_needed", "label": "Not needed"}
         ],
         "groups": [
-          {
-            "id": "entry",
-            "title": "Entry & Main Floor",
-            "items": [
-              "Front foyer",
-              "Mudroom",
-              "Main-floor office or den",
-              "Powder room"
-            ]
-          },
-          {
-            "id": "living",
-            "title": "Living & Dining",
-            "items": [
-              "Great room",
-              "Open dining area",
-              "Formal dining room",
-              "Separate family room"
-            ]
-          },
-          {
-            "id": "kitchen",
-            "title": "Kitchen",
-            "items": [
-              "Kitchen",
-              "Walk-in pantry",
-              "Butler's pantry",
-              "Scullery or prep kitchen"
-            ]
-          },
-          {
-            "id": "private",
-            "title": "Bedrooms & Private Spaces",
-            "items": [
-              "Primary bedroom",
-              "Primary ensuite",
-              "Primary walk-in closet",
-              "Secondary bedrooms",
-              "Guest suite",
-              "In-law suite"
-            ]
-          },
-          {
-            "id": "special",
-            "title": "Special-Purpose Spaces",
-            "items": [
-              "Home office",
-              "Gym",
-              "Sauna",
-              "Home theatre",
-              "Games room",
-              "Wine cellar",
-              "Bar",
-              "Cold room"
-            ]
-          }
+          {"id": "entry", "label": "Entry & Main Floor", "items": [{"value": "front_foyer", "label": "Front foyer"}, {"value": "mudroom", "label": "Mudroom"}, {"value": "main_floor_office", "label": "Main-floor office or den"}, {"value": "powder_room", "label": "Powder room"}]},
+          {"id": "living", "label": "Living & Dining", "items": [{"value": "great_room", "label": "Great room"}, {"value": "open_dining", "label": "Open dining area"}, {"value": "formal_dining", "label": "Formal dining room"}, {"value": "family_room", "label": "Separate family room"}]},
+          {"id": "kitchen", "label": "Kitchen", "items": [{"value": "kitchen", "label": "Kitchen"}, {"value": "walk_in_pantry", "label": "Walk-in pantry"}, {"value": "butlers_pantry", "label": "Butler's pantry"}, {"value": "scullery", "label": "Scullery or prep kitchen"}]},
+          {"id": "private", "label": "Bedrooms & Private Spaces", "items": [{"value": "primary_bedroom", "label": "Primary bedroom"}, {"value": "primary_ensuite", "label": "Primary ensuite"}, {"value": "primary_closet", "label": "Primary walk-in closet"}, {"value": "secondary_bedrooms", "label": "Secondary bedrooms"}, {"value": "guest_suite", "label": "Guest suite"}, {"value": "in_law_suite", "label": "In-law suite"}]},
+          {"id": "special", "label": "Special-Purpose Spaces", "items": [{"value": "home_office", "label": "Home office"}, {"value": "gym", "label": "Gym"}, {"value": "sauna", "label": "Sauna"}, {"value": "home_theatre", "label": "Home theatre"}, {"value": "games_room", "label": "Games room"}, {"value": "wine_cellar", "label": "Wine cellar"}, {"value": "bar", "label": "Bar"}, {"value": "cold_room", "label": "Cold room"}]}
         ],
-        "item_details": [
-          {
-            "key": "size",
-            "label": "Preferred size",
-            "component": "single_select",
-            "options": [
-              "Compact",
-              "Standard",
-              "Generous",
-              "Not sure"
-            ]
-          },
-          {
-            "key": "floor",
-            "label": "Preferred floor",
-            "component": "single_select",
-            "options": [
-              "Basement",
-              "Main floor",
-              "Upper floor",
-              "No preference"
-            ]
-          },
-          {
-            "key": "special_requirements",
-            "label": "Special requirements",
-            "component": "long_text"
-          }
+        "details": [
+          {"key": "size", "label": "Preferred size", "component": "single_select", "options": [{"value": "compact", "label": "Compact"}, {"value": "standard", "label": "Standard"}, {"value": "generous", "label": "Generous"}, {"value": "not_sure", "label": "Not sure"}]},
+          {"key": "floor", "label": "Preferred floor", "component": "single_select", "options": [{"value": "basement", "label": "Basement"}, {"value": "main_floor", "label": "Main floor"}, {"value": "upper_floor", "label": "Upper floor"}, {"value": "no_preference", "label": "No preference"}]},
+          {"key": "special_requirements", "label": "Special requirements", "component": "long_text"}
         ]
+      },
+      "answer_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["selections"],
+        "properties": {
+          "selections": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["item_id", "status"],
+              "properties": {
+                "item_id": {"type": "string", "enum": ["front_foyer", "mudroom", "main_floor_office", "powder_room", "great_room", "open_dining", "formal_dining", "family_room", "kitchen", "walk_in_pantry", "butlers_pantry", "scullery", "primary_bedroom", "primary_ensuite", "primary_closet", "secondary_bedrooms", "guest_suite", "in_law_suite", "home_office", "gym", "sauna", "home_theatre", "games_room", "wine_cellar", "bar", "cold_room"]},
+                "status": {"type": "string", "enum": ["required", "possible", "not_needed"]},
+                "details": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "size": {"type": "string", "enum": ["compact", "standard", "generous", "not_sure"]},
+                    "floor": {"type": "string", "enum": ["basement", "main_floor", "upper_floor", "no_preference"]},
+                    "special_requirements": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -149,24 +101,9 @@
       "required": true,
       "props": {
         "fields": [
-          {
-            "key": "bedrooms",
-            "label": "Bedrooms",
-            "component": "number",
-            "minimum": 1
-          },
-          {
-            "key": "full_bathrooms",
-            "label": "Full bathrooms",
-            "component": "number",
-            "minimum": 1
-          },
-          {
-            "key": "powder_rooms",
-            "label": "Powder rooms",
-            "component": "number",
-            "minimum": 0
-          }
+          {"key": "bedrooms", "label": "Bedrooms", "component": "number", "minimum": 1},
+          {"key": "full_bathrooms", "label": "Full bathrooms", "component": "number", "minimum": 1},
+          {"key": "powder_rooms", "label": "Powder rooms", "component": "number", "minimum": 0}
         ]
       }
     }

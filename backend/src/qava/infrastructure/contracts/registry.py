@@ -8,6 +8,8 @@ from typing import Any
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
+from qava.domain.definition import validate_declared_programme
+
 
 @dataclass(frozen=True, slots=True)
 class ValidationIssue:
@@ -131,6 +133,22 @@ class ContractRegistry:
     def _validate_definition_pack(self) -> list[ValidationIssue]:
         issues: list[ValidationIssue] = []
         definition_dir = self._repo_root / "data" / "definitions" / "custom-home-intake" / "v1"
+        catalog = self._load_json(self._repo_root / "data" / "components" / "catalog.v1.json")
+        components = catalog.get("components") if isinstance(catalog, dict) else []
+        if not isinstance(components, list):
+            return [
+                ValidationIssue(
+                    location=str(self._repo_root / "data" / "components" / "catalog.v1.json"),
+                    message="Catalog components must be a list.",
+                )
+            ]
+        props_schemas = {
+            component["name"]: component["props_schema"]
+            for component in components
+            if isinstance(component, dict)
+            and isinstance(component.get("name"), str)
+            and isinstance(component.get("props_schema"), dict)
+        }
 
         definition = self._load_json(definition_dir / "definition.json")
         for issue in self._validate_against("definition.schema.json", definition):
@@ -176,6 +194,28 @@ class ContractRegistry:
                             message=issue.message,
                         )
                     )
+                if isinstance(question, dict):
+                    component_name = question.get("component")
+                    props_schema = props_schemas.get(component_name)
+                    if isinstance(props_schema, dict):
+                        validator = Draft202012Validator(props_schema)
+                        for error in validator.iter_errors(question.get("props", {})):
+                            pointer = "/" + "/".join(str(part) for part in error.absolute_path)
+                            issues.append(
+                                ValidationIssue(
+                                    location=f"{question_file}:questions[{index}]:props{pointer}",
+                                    message=error.message,
+                                )
+                            )
+                    question_id = question.get("id")
+                    if isinstance(question_id, str):
+                        for issue in validate_declared_programme(question, question_id):
+                            issues.append(
+                                ValidationIssue(
+                                    location=f"{question_file}:questions[{index}]{issue.pointer}",
+                                    message=issue.message,
+                                )
+                            )
 
         return issues
 

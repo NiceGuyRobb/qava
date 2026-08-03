@@ -37,6 +37,108 @@ async def test_create_session_returns_404_for_missing_questionnaire(client: Asyn
     assert resp.status_code == 404
 
 
+async def test_declared_programme_answer_maps_through_normal_session_flow(
+    client: AsyncClient,
+) -> None:
+    create = await client.post(
+        "/api/v1/questionnaire-drafts",
+        json={
+            "id": "declared-programme-session",
+            "title": "Declared programme session",
+            "output_contract": {
+                "type": "object",
+                "properties": {"programme": {"type": "object"}},
+                "required": ["programme"],
+            },
+        },
+        headers={"X-Qava-Identity": AUTHOR},
+    )
+    assert create.status_code == 201, create.text
+
+    answer_schema = {
+        "type": "object",
+        "required": ["selections"],
+        "properties": {
+            "selections": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "required": ["item_id", "status"],
+                    "properties": {
+                        "item_id": {"type": "string", "enum": ["item-a", "item-b"]},
+                        "status": {"type": "string", "enum": ["required", "possible"]},
+                    },
+                },
+            },
+        },
+    }
+    patch = await client.patch(
+        "/api/v1/questionnaire-drafts/declared-programme-session",
+        json={
+            "operations": [
+                {
+                    "operation": "upsert_question",
+                    "question": {
+                        "id": "programme",
+                        "prompt": "Choose declared items.",
+                        "output_need_ids": ["need:programme"],
+                        "answer_schema": answer_schema,
+                        "mapping": {"mode": "direct", "target": "/programme"},
+                        "presentation": {
+                            "name": "declared_programme",
+                            "version": 1,
+                            "props": {
+                                "groups": [
+                                    {
+                                        "id": "group-a",
+                                        "label": "Group A",
+                                        "items": [
+                                            {"value": "item-a", "label": "Item A"},
+                                            {"value": "item-b", "label": "Item B"},
+                                        ],
+                                    }
+                                ],
+                                "statuses": [
+                                    {"value": "required", "label": "Required"},
+                                    {"value": "possible", "label": "Possible"},
+                                ],
+                            },
+                        },
+                        "required": True,
+                        "order": 1,
+                    },
+                }
+            ]
+        },
+        headers={"X-Qava-Identity": AUTHOR},
+    )
+    assert patch.status_code == 200, patch.text
+    publish = await client.post(
+        "/api/v1/questionnaire-drafts/declared-programme-session/publish",
+        headers={"X-Qava-Identity": AUTHOR},
+    )
+    assert publish.status_code == 201, publish.text
+
+    view = await _start_session(client, publish.json()["questionnaire_id"], publish.json()["version"])
+    response = await client.post(
+        f"/api/v1/sessions/{view['session']['id']}/answers",
+        json={
+            "interaction_id": "programme",
+            "expected_revision": 1,
+            "value": {"selections": [{"item_id": "item-a", "status": "required"}]},
+        },
+        headers={"X-Qava-Identity": RESPONDENT},
+    )
+    assert response.status_code == 200, response.text
+    updated = response.json()
+    assert updated["session"]["revision"] == 2
+    assert updated["result"]["data"]["programme"] == {
+        "selections": [{"item_id": "item-a", "status": "required"}]
+    }
+    assert updated["current_interaction"] is None
+    assert updated["health"]["readiness"] == "ready"
+
+
 async def test_get_session_returns_404_when_not_found(client: AsyncClient) -> None:
     resp = await client.get(
         "/api/v1/sessions/nonexistent-id",

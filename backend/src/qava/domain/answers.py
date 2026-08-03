@@ -20,11 +20,38 @@ def validate_answer(question: Mapping[str, Any], answer_value: Any) -> list[str]
     )
     issues.extend(error.message for error in validation_errors)
 
+    if not validation_errors:
+        issues.extend(_validate_unique_selection_item_ids(answer_value))
+
     choices = question.get("choices")
     if isinstance(choices, list) and choices:
         issues.extend(_validate_choice_ids(choices, answer_value))
 
     return issues
+
+
+def _validate_unique_selection_item_ids(answer_value: Any) -> list[str]:
+    if not isinstance(answer_value, Mapping):
+        return []
+    selections = answer_value.get("selections")
+    if not isinstance(selections, list):
+        return []
+
+    item_ids = [
+        selection.get("item_id")
+        for selection in selections
+        if isinstance(selection, Mapping) and isinstance(selection.get("item_id"), str)
+    ]
+    seen: set[str] = set()
+    duplicates: list[str] = []
+    for item_id in item_ids:
+        if item_id in seen:
+            duplicates.append(item_id)
+        else:
+            seen.add(item_id)
+    if not duplicates:
+        return []
+    return [f"selections contains duplicate item_id values: {duplicates!r}"]
 
 
 def _validate_choice_ids(choices: Sequence[object], answer_value: Any) -> list[str]:

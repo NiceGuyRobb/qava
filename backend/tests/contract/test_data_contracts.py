@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
+from qava.infrastructure.contracts.registry import ContractRegistry
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CONTRACTS_DIR = REPO_ROOT / "data" / "contracts" / "v1"
@@ -133,6 +135,62 @@ def test_definition_pack_files_match_contracts() -> None:
             question_ids.add(question_id)
 
             assert question.get("topic_id") == file_topic_id
+
+
+def test_definition_pack_component_props_are_validated_against_catalog(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo"
+    shutil.copytree(REPO_ROOT / "data", repo_root / "data")
+
+    structure_path = (
+        repo_root
+        / "data"
+        / "definitions"
+        / "custom-home-intake"
+        / "v1"
+        / "questions"
+        / "structure.json"
+    )
+    structure = _load_json(structure_path)
+    home_structure = next(
+        question for question in structure["questions"] if question["id"] == "home-structure"
+    )
+    home_structure["props"]["fields"][0]["component"] = "unsupported_control"
+    structure_path.write_text(json.dumps(structure), encoding="utf-8")
+
+    issues = ContractRegistry(repo_root).validate_all()
+
+    assert any(
+        ":props/fields/0/component" in issue.location
+        and "not one of" in issue.message
+        for issue in issues
+    )
+
+
+def test_definition_pack_rejects_semantic_programme_mismatch(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo"
+    shutil.copytree(REPO_ROOT / "data", repo_root / "data")
+
+    rooms_path = (
+        repo_root
+        / "data"
+        / "definitions"
+        / "custom-home-intake"
+        / "v1"
+        / "questions"
+        / "rooms.json"
+    )
+    rooms = _load_json(rooms_path)
+    programme = next(question for question in rooms["questions"] if question["id"] == "room-programme")
+    programme["props"]["statuses"][1]["value"] = "required"
+    rooms_path.write_text(json.dumps(rooms), encoding="utf-8")
+
+    issues = ContractRegistry(repo_root).validate_all()
+
+    assert any(
+        "rooms.json:questions[1]/questions/room-programme/props/statuses/1" in issue.location
+        and "must be unique" in issue.message
+        for issue in issues
+    )
 
 
 def test_example_fixtures_match_core_contract_expectations() -> None:

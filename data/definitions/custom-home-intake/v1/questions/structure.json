@@ -10,6 +10,45 @@
       "prompt": "Describe the basic structure of the home.",
       "component": "structured_form",
       "required": true,
+      "answer_schema": {
+        "type": "object",
+        "properties": {
+          "target_area": {
+            "type": "object",
+            "required": [
+              "value",
+              "unit"
+            ],
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 1
+              },
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "sq_ft",
+                  "sq_m"
+                ]
+              }
+            }
+          },
+          "ceiling_preferences": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "Standard throughout",
+                "Raised main-floor ceilings",
+                "Vaulted living area",
+                "Double-height space",
+                "Raised basement ceilings"
+              ]
+            },
+            "uniqueItems": true
+          }
+        }
+      },
       "props": {
         "fields": [
           {
