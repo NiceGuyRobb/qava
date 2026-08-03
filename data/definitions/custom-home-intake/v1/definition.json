@@ -18,7 +18,7 @@
     "questions/budget.json"
   ],
   "component_catalog": "../../../components/catalog.v1.json",
-  "contract": "../../../contracts/v1/definition.schema.json",
+  "contract": "output.schema.json",
   "metadata": {
     "sample_domain": true,
     "question_count": 28,

@@ -17,21 +17,56 @@
     "required": { "type": "boolean" },
     "props": { "type": "object" },
     "answer_schema": { "type": "object" },
+    "option_source": { "$ref": "#/$defs/optionSource" },
     "when": { "$ref": "#/$defs/condition" },
     "clarification": { "$ref": "#/$defs/clarificationPolicy" },
     "analysis": { "type": "object" },
     "generated_from": { "type": "object" }
   },
   "$defs": {
+    "optionSource": {
+      "type": "object",
+      "required": ["provider"],
+      "properties": {
+        "provider": { "type": "string" },
+        "select": { "type": "string" },
+        "ai_allowed_only": { "type": "boolean" }
+      }
+    },
     "condition": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "operator", "value"],
+      "required": ["path", "operator"],
       "properties": {
         "path": { "type": "string" },
-        "operator": { "enum": ["equals", "not_equals", "in", "not_in", "contains", "exists"] },
+        "operator": { "enum": ["equals", "in", "contains", "exists"] },
         "value": {}
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "operator": { "enum": ["equals", "contains"] }
+            }
+          },
+          "then": {
+            "required": ["value"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operator": { "const": "in" }
+            }
+          },
+          "then": {
+            "required": ["value"],
+            "properties": {
+              "value": { "type": "array", "minItems": 1 }
+            }
+          }
+        }
+      ]
     },
     "clarificationPolicy": {
       "type": "object",

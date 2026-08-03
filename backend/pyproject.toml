@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "qava"
+version = "0.1.0"
+description = "Contract-first question and answer engine"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "aiosqlite==0.21.0",
+    "alembic==1.16.4",
+    "fastapi==0.116.1",
+    "jsonschema==4.25.0",
+    "pydantic==2.11.7",
+    "pydantic-settings==2.10.1",
+    "referencing==0.36.2",
+    "sqlalchemy[asyncio]==2.0.41",
+    "typer==0.16.0",
+    "uvicorn[standard]==0.35.0",
+]
+
+[project.scripts]
+qava = "qava.cli:app"
+
+[dependency-groups]
+dev = [
+    "httpx==0.28.1",
+    "hypothesis==6.136.1",
+    "pyright==1.1.403",
+    "pytest==8.4.1",
+    "pytest-asyncio==1.1.0",
+    "ruff==0.12.5",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/qava"]
+
+[tool.pytest.ini_options]
+addopts = ["--strict-config", "--strict-markers"]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.pyright]
+include = ["src", "tests"]
+pythonVersion = "3.12"
+typeCheckingMode = "strict"
+venvPath = "."
+venv = ".venv"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC", "RUF"]
+
+[tool.ruff.format]
+quote-style = "double"

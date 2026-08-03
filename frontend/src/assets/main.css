@@ -1,0 +1,177 @@
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 20rem;
+  min-height: 100%;
+  background: var(--qava-sky-50);
+  font-family: var(--qava-font-sans);
+  font-synthesis: none;
+  letter-spacing: 0;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-width: 20rem;
+  min-height: 100vh;
+  margin: 0;
+  color: var(--qava-ink);
+  background-color: var(--qava-sky-50);
+  background-image:
+    linear-gradient(145deg, rgb(255 255 255 / 0.82) 0%, transparent 42%),
+    linear-gradient(25deg, transparent 48%, rgb(234 245 255 / 0.72) 72%, transparent 100%);
+  line-height: 1.5;
+}
+
+button,
+input,
+select,
+textarea {
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: 0;
+}
+
+button,
+input:not([type='checkbox']):not([type='radio']),
+select {
+  min-height: var(--qava-control-height);
+}
+
+button,
+[type='button'],
+[type='reset'],
+[type='submit'] {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+img,
+picture,
+svg,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3,
+p,
+figure,
+blockquote,
+dl,
+dd {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: var(--qava-focus);
+  text-underline-offset: 0.18em;
+}
+
+code,
+kbd,
+pre,
+samp,
+.qava-mono {
+  font-family: var(--qava-font-mono);
+}
+
+.qava-serif-accent {
+  font-family: var(--qava-font-serif);
+  font-style: italic;
+}
+
+:focus-visible {
+  outline: 3px solid var(--qava-focus);
+  outline-offset: 3px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+::selection {
+  color: var(--qava-ink);
+  background: var(--qava-sky-100);
+}
+
+.qava-status-info {
+  color: #0d629f;
+}
+
+.qava-status-attention {
+  color: #87500f;
+}
+
+.qava-status-success {
+  color: #1f7148;
+}
+
+.qava-status-danger {
+  color: #a32938;
+}
+
+.qava-status-swatch {
+  width: 0.625rem;
+  height: 0.625rem;
+  flex: 0 0 0.625rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.qava-status-swatch--info {
+  color: var(--qava-status-info);
+}
+
+.qava-status-swatch--attention {
+  color: var(--qava-status-attention);
+}
+
+.qava-status-swatch--success {
+  color: var(--qava-status-success);
+}
+
+.qava-status-swatch--danger {
+  color: var(--qava-status-danger);
+}
+
+#app {
+  min-height: 100vh;
+  isolation: isolate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+  }
+}

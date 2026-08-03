@@ -1,0 +1,32 @@
+:root {
+  color-scheme: light;
+
+  --qava-sky-50: #f5faff;
+  --qava-sky-100: #eaf5ff;
+  --qava-sky-500: #3998e8;
+  --qava-ink: #111317;
+  --qava-ink-muted: #5f6875;
+  --qava-surface: #ffffff;
+  --qava-surface-soft: #f8fafc;
+  --qava-line: #dbe3eb;
+  --qava-orange: #f29b38;
+  --qava-green: #36a269;
+  --qava-red: #d94b58;
+  --qava-focus: #1677c8;
+  --qava-shadow: 0 16px 48px rgb(28 55 82 / 0.1);
+
+  --qava-font-sans: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  --qava-font-serif: "Newsreader", "Iowan Old Style", "Palatino Linotype", serif;
+  --qava-font-mono: "IBM Plex Mono", "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+
+  --qava-status-info: var(--qava-sky-500);
+  --qava-status-attention: var(--qava-orange);
+  --qava-status-success: var(--qava-green);
+  --qava-status-danger: var(--qava-red);
+
+  --qava-radius-control: 999px;
+  --qava-radius-surface: 0.5rem;
+  --qava-control-height: 2.5rem;
+  --qava-motion-fast: 150ms;
+  --qava-motion-standard: 210ms;
+}

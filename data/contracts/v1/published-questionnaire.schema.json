@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qava.dev/contracts/v1/published-questionnaire.schema.json",
+  "title": "Published Qava questionnaire",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "title", "output_contract", "questions"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "output_contract": {
+      "type": "object",
+      "required": ["type", "properties"],
+      "properties": {
+        "type": {"type": "string", "enum": ["object"]},
+        "properties": {
+          "type": "object",
+          "properties": {
+            "answer_1": {"$ref": "#/$defs/stringProperty"},
+            "answer_2": {"$ref": "#/$defs/stringProperty"},
+            "answer_3": {"$ref": "#/$defs/stringProperty"},
+            "answer_4": {"$ref": "#/$defs/stringProperty"},
+            "answer_5": {"$ref": "#/$defs/stringProperty"}
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "prompt", "answer_schema", "mapping", "presentation", "required", "order"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+          "prompt": {"type": "string", "minLength": 1},
+          "answer_schema": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": {"type": "string", "enum": ["string", "number", "boolean"]}
+            }
+          },
+          "mapping": {
+            "type": "object",
+            "required": ["mode", "target"],
+            "properties": {
+              "mode": {"type": "string", "enum": ["direct"]},
+              "target": {"type": "string", "pattern": "^/"}
+            }
+          },
+          "presentation": {
+            "type": "object",
+            "required": ["name", "version"],
+            "properties": {
+              "name": {"type": "string", "enum": ["short_text", "long_text", "number", "boolean"]},
+              "version": {"type": "integer", "minimum": 1}
+            }
+          },
+          "required": {"type": "boolean"},
+          "order": {"type": "integer", "minimum": 1}
+        },
+        "additionalProperties": true
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {"type": "object"}
+    },
+    "health_policy": {"type": "object"},
+    "assistance_policy": {"type": "object"}
+  },
+  "$defs": {
+    "stringProperty": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"type": "string", "enum": ["string", "number", "boolean"]}
+      }
+    }
+  }
+}
